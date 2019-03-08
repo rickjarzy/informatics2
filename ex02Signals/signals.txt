@@ -1,0 +1,4 @@
+amplitudes=10,15,20
+frequencies=5,2,1
+phases=180,90,0
+colors=blue,red,green
