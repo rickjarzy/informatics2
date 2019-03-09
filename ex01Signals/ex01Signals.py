@@ -23,12 +23,20 @@ def readSignals(file_path):
 
 
 def plotSignal(sig_ele, sig_noi):
+    stages = len(sig_ele["amplitudes"])
+    fig, ax = plt.subplots(figsize=(10, 5))
+    t = sig_noi[:,0]
+    for i in range(0,stages,1):
+        print("Calc Signal N {}\n-------------".format(i))
+        A = float(sig_ele["amplitudes"][i])
+        f = float(sig_ele["frequencies"][i])
+        phi = float(sig_ele["phases"][i])
+        linecolor = sig_ele["colors"][i]
+        calc_signal = A * numpy.sin(2 * numpy.pi * f * t + phi * (numpy.pi/180))
 
-    fig, ax = plt.figure(figsize=(10,5))
-
-    ax.plot()
-
-
+        ax.plot(t, calc_signal, label="A = {}, f = {} Hz, phi = {} deg".format(A,f,phi))
+    plt.legend()
+    plt.show()
 
 if __name__ == "__main__":
 
@@ -36,14 +44,9 @@ if __name__ == "__main__":
 
     signal_noise = numpy.loadtxt("noise.txt")
 
-
-    signal_calc = numpy.ones((signal_noise.shape[0], len(signal_elements["amplitudes"])))
-    signal_calc = numpy.multiply(signal_calc, signal_noise[:,0])
+    plotSignal(signal_elements, signal_noise)
 
 
-
-    print(signal_calc)
-    print(signal_calc.shape)
 
 
 
