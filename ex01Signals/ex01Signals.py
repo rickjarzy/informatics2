@@ -3,7 +3,6 @@
 # Informatics 2 - SS19
 # Gruppe A
 import numpy
-import sys
 from matplotlib import pyplot as plt
 
 def readSignals(file_path):
@@ -56,7 +55,7 @@ if __name__ == "__main__":
 
     stages = len(signal_elements["amplitudes"])     # how many different signals will be calculated
     fig, ax = plt.subplots(figsize=(10, 5)) # create the plot objects
-    print("size of ax: ", sys.getsizeof(ax))
+
     # create so many plots and signals according to stages
     for i in range(0,stages,1):
         print("- Calc signal and noisy signal Nr {} ...".format(i))
