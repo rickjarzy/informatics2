@@ -1,4 +1,5 @@
 from scipy import special
+import numpy
 # https://www.maplesoft.com/applications/view.aspx?sid=3617&view=html
 
 
@@ -23,7 +24,7 @@ def binomial_koefficient(n,k):
 
 
 def pascalsTriangle(n):
-    """Calculates the Pascals Triangle"""
+    """Calculates the Pascals Triangle - NOT RECURSIVE"""
 
     col_list = []
 
@@ -41,33 +42,64 @@ def pascalsTriangle(n):
 
     return col_list
 
+def triangle(n):
+    """
+    recurse function of pascal triangle found on stackoverflow, copy and pasted it
+    https://stackoverflow.com/questions/10628788/python-recursive-pascal-triangle
+    """
+    if n == 0:
+        return []
 
+    elif n == 1:
+        return [[1]]
+
+    else:
+        new_row = [1]
+        print("new row: ", new_row)
+        result = triangle(n-1)
+        print("result: ", result)
+        last_row = result[-1]
+        print("last row: ", last_row)
+
+        for i in range(len(last_row)-1):
+            new_row.append(last_row[i] + last_row[i+1])
+
+        new_row += [1]
+        result.append(new_row)
+
+    return result
 
 if __name__ == "__main__":
 
-    n = 6
-    pascal_triangle = pascalsTriangle(6)
-    fib_sum = 0
+    n = 4
+
+    #print("\n")
+    #print(triangle(n))
+    #print("\n")
+
+
+    pascal_triangle = pascalsTriangle(n)
+    fibonacci_list = [0,1]
     for line in pascal_triangle:
         print(line)
         num_elements = len(line)
 
-        print("len elements: ", len(line))
+        #print("len elements: ", len(line))
 
-        if num_elements % 2 == 0:
-            print("gerade zahl")
-            iter_list = list(range(num_elements-1,0,-2)).append(0)
-            print("iter list: ", iter_list)
-        else:
-            print("ungerade zahl")
-            iter_list = list(range(num_elements-1,0,-2))
-            print("iter list: ", iter_list)
+        fib_sum = 0
 
-        for i in iter_list:
+        for j in range(1 + int(numpy.trunc(num_elements-2 / 2))):
 
-            print(i)
+            if num_elements-2*j < 0:
+                break
+            else:
+                #print("%d - " % j, num_elements - j, " ", num_elements - 2 * j)
+                fib_sum += binomial_koefficient(num_elements - j, num_elements - 2 * j)
+        #print("fib sum: ", fib_sum)
+        fibonacci_list.append(fib_sum)
 
 
+    print("fibonacci result: ", fibonacci_list)
 
 
 
