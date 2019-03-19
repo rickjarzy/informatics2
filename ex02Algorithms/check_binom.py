@@ -1,4 +1,5 @@
 from scipy import special
+# https://www.maplesoft.com/applications/view.aspx?sid=3617&view=html
 
 
 def factoriel(n):
@@ -41,7 +42,38 @@ def pascalsTriangle(n):
     return col_list
 
 
-for line in pascalsTriangle(6):
-    print(line)
+
+if __name__ == "__main__":
+
+    n = 6
+    pascal_triangle = pascalsTriangle(6)
+    fib_sum = 0
+    for line in pascal_triangle:
+        print(line)
+        num_elements = len(line)
+
+        print("len elements: ", len(line))
+
+        if num_elements % 2 == 0:
+            print("gerade zahl")
+            iter_list = list(range(num_elements-1,0,-2)).append(0)
+            print("iter list: ", iter_list)
+        else:
+            print("ungerade zahl")
+            iter_list = list(range(num_elements-1,0,-2))
+            print("iter list: ", iter_list)
+
+        for i in iter_list:
+
+            print(i)
+
+
+
+
+
+
+
+
+
 
 
