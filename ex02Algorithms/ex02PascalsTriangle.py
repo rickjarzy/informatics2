@@ -1,6 +1,9 @@
-from scipy import special
+# Paul Arzberger 00311430
+# ex02PascalsTriangle Gruppe A
+# literatur zu fibonacci und zusammenhang mit pascals dreieck https://www.maplesoft.com/applications/view.aspx?sid=3617&view=html
+
 import numpy
-# https://www.maplesoft.com/applications/view.aspx?sid=3617&view=html
+# 
 
 
 def factoriel(n):
