@@ -59,20 +59,30 @@ def pascals_triangle(n):
         return [[1]]
 
     else:
-        new_row = [1]
-        print("new row: ", new_row)
-        result = pascals_triangle(n-1)
-        print("result: ", result)
-        last_row = result[-1]
-        print("last row: ", last_row)
+        # create a new row that gets the sum elements
+        new_list = [1]
+        print("new row: ", new_list)
 
-        for i in range(len(last_row)-1):
-            new_row.append(last_row[i] + last_row[i+1])
+        # make a recursive call of the function it self and get a list of lists
+        pascal_triangle_list = pascals_triangle(n-1)
+        print("result: ", pascal_triangle_list)
 
-        new_row += [1]
-        result.append(new_row)
+        # take the last list in the "lost of lists"
+        last_list= pascal_triangle_list[-1]
+        print("last row: ", last_list)
 
-    return result
+
+        # sum the list elements
+        for i in range(len(last_list)-1):
+            new_list.append(last_list[i] + last_list[i+1])
+
+        # add the last row to the "actual new row"
+            new_list += [1]
+
+        # append the new row list to the result list
+        pascal_triangle_list.append(new_list)
+
+    return pascal_triangle_list
 
 if __name__ == "__main__":
 
@@ -82,7 +92,10 @@ if __name__ == "__main__":
     #print(pascals_triangle(n))
     #print("\n")
 
-    # create pascals triangle
+    # create pascals triangle with the function that uses recursion
+    #pascal_triangle = pascals_triangle(n)
+
+    # create pascals triangle with the function that uses NO recursion
     pascal_triangle = pascalsTriangle(n)
 
     # initialize fibonacci sequence
