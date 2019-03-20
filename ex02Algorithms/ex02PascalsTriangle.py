@@ -18,7 +18,7 @@ def factoriel(n):
 
 
 
-def binomial_koefficient(n,k):
+def binomial_koefficient(n, k):
 
     """Function that calculates the binomial coefficient """
 
@@ -28,7 +28,7 @@ def binomial_koefficient(n,k):
         return factoriel(n) // (factoriel(k) * factoriel(n-k))      # return the calculated coefficient
 
 
-def pascalsTriangle(n):
+def pascals_triangle(n):
     """Calculates the Pascals Triangle - NOT RECURSIVE"""
 
     col_list = []
@@ -47,56 +47,60 @@ def pascalsTriangle(n):
 
     return col_list
 
-def pascals_triangle(n):
+def pascals_triangle_rec(n):
     """
     recurse function of pascal triangle found on stackoverflow,
     https://stackoverflow.com/questions/10628788/python-recursive-pascal-triangle
     """
+    #print("input n ", n)
     if n == 0:
+        #print("geh da rein")
         return []
 
     elif n == 1:
         return [[1]]
 
     else:
-        # create a new row that gets the sum elements
-        new_list = [1]
-        print("new row: ", new_list)
 
-        # make a recursive call of the function it self and get a list of lists
-        pascal_triangle_list = pascals_triangle(n-1)
-        print("result: ", pascal_triangle_list)
+        # create a new pascal row as a list and let it start with a 1
+        new_pascal_row = [1]
+        #print("new row: ", new_pascal_row)
 
-        # take the last list in the "lost of lists"
-        last_list= pascal_triangle_list[-1]
-        print("last row: ", last_list)
+        # call pascal triangle recursive and return the entire
+        pascal_triangle_list = pascals_triangle_rec(n-1)
+        #print("result: ", pascal_triangle_list)
 
+        # take the last list in the lost of lists returned by the recursive function
+        last_row = pascal_triangle_list[-1]
+        #print("last row: ", last_row)
 
-        # sum the list elements
-        for i in range(len(last_list)-1):
-            new_list.append(last_list[i] + last_list[i+1])
+        # iter through the last list in the list of lists
+        for i in range(len(last_row)-1):
+            # sum the elements according the pascals triangle and append it to the last row
+            #print("calc sum: ", last_row[i] + last_row[i+1])
+            new_pascal_row.append(last_row[i] + last_row[i+1])
 
-        # add the last row to the "actual new row"
-            new_list += [1]
+        # "close" the last row with a 1
+        new_pascal_row += [1]
 
-        # append the new row list to the result list
-        pascal_triangle_list.append(new_list)
+        # append the new row under the last row so it creates the pascal triangle
+        pascal_triangle_list.append(new_pascal_row)
 
     return pascal_triangle_list
 
 if __name__ == "__main__":
 
-    n = 6
+    n = 12
 
     #print("\n")
     #print(pascals_triangle(n))
     #print("\n")
 
     # create pascals triangle with the function that uses recursion
-    #pascal_triangle = pascals_triangle(n)
+    #pascal_triangle = pascals_triangle_rec(n)
 
     # create pascals triangle with the function that uses NO recursion
-    pascal_triangle = pascalsTriangle(n)
+    pascal_triangle = pascals_triangle(n)
 
     # initialize fibonacci sequence
     fibonacci_list = [0,1]
