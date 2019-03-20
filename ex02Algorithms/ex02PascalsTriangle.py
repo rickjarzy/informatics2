@@ -1,9 +1,11 @@
-# Paul Arzberger 00311430
-# ex02PascalsTriangle Gruppe A
+# Paul Arzberger
+# 00311430
+# Informatics 2 - SS19
+# Gruppe A
 # literatur zu fibonacci und zusammenhang mit pascals dreieck https://www.maplesoft.com/applications/view.aspx?sid=3617&view=html
 
 import numpy
-# 
+
 
 
 def factoriel(n):
@@ -45,9 +47,9 @@ def pascalsTriangle(n):
 
     return col_list
 
-def triangle(n):
+def pascals_triangle(n):
     """
-    recurse function of pascal triangle found on stackoverflow, copy and pasted it
+    recurse function of pascal triangle found on stackoverflow,
     https://stackoverflow.com/questions/10628788/python-recursive-pascal-triangle
     """
     if n == 0:
@@ -59,7 +61,7 @@ def triangle(n):
     else:
         new_row = [1]
         print("new row: ", new_row)
-        result = triangle(n-1)
+        result = pascals_triangle(n-1)
         print("result: ", result)
         last_row = result[-1]
         print("last row: ", last_row)
@@ -74,15 +76,19 @@ def triangle(n):
 
 if __name__ == "__main__":
 
-    n = 4
+    n = 6
 
     #print("\n")
-    #print(triangle(n))
+    #print(pascals_triangle(n))
     #print("\n")
 
-
+    # create pascals triangle
     pascal_triangle = pascalsTriangle(n)
+
+    # initialize fibonacci sequence
     fibonacci_list = [0,1]
+
+    # walk through sub_lists in pascals triangle return list
     for line in pascal_triangle:
         print(line)
         num_elements = len(line)
@@ -90,7 +96,7 @@ if __name__ == "__main__":
         #print("len elements: ", len(line))
 
         fib_sum = 0
-
+        # calculate the fibinacci sequence with binomial koefficients
         for j in range(1 + int(numpy.trunc(num_elements-2 / 2))):
 
             if num_elements-2*j < 0:
@@ -101,14 +107,4 @@ if __name__ == "__main__":
         #print("fib sum: ", fib_sum)
         fibonacci_list.append(fib_sum)
 
-
     print("fibonacci result: ", fibonacci_list)
-
-
-
-
-
-
-
-
-
