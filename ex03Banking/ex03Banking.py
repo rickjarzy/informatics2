@@ -17,10 +17,10 @@ class BankAccount:
         if float(balance) >= 0. :
             # if balance input is valid assign it to instance attribute
             self.__balance = float(balance)
-            print("".format(self.__holder, self.__balance))
+            print("\n- Creating Bank Account for {}\n  balance: {}".format(self.__holder, self.__balance))
         else:
             # raise error and print screenmessage and abort instantiation of class if input is not valid
-            print("!! instance creation - FAILED - \   input balance = {} | is negative or not a number".format(balance))
+            print("\n!! instance creation - FAILED - \   input balance = {} | is negative or not a number".format(balance))
             raise ValueError
 
     # print bank account information to screen if print() is called
@@ -29,6 +29,7 @@ class BankAccount:
         prints the bank account information to the screen if instance is printed via print()
         :return: string with bank account information
         """
+
         return "\n- bank account owner: {} \n- balance: {}".format(self.__holder, self.__balance)
 
     def __del__(self):
@@ -66,10 +67,10 @@ class BankAccount:
         """
         if float(deposite_amount) > 0:
             self.__balance += float(deposite_amount)
-            print("- deposit - SUCCESS -\n  deposit {} to {} ".format(deposite_amount, self.__holder))
+            print("\n- deposit - SUCCESS -\n  deposit {} to {} \n  {} balance: {}".format(deposite_amount, self.__holder, self.__holder, self.__balance))
             return True
         else:
-            print("!! deposit - FAILED - \n   input deposit ammount = {} | is negative or not a number".format(deposite_amount))
+            print("\n!! deposit - FAILED - \n   input deposit ammount = {} | is negative or not a number".format(deposite_amount))
             return False
 
 
@@ -86,11 +87,11 @@ class BankAccount:
         """
         if float(withdraw_amount) <= self.__balance and float(withdraw_amount) > 0:
             self.__balance -= float(withdraw_amount)
-            print("- withdraw - SUCCESS - \n  withdraw {} from {}".format(withdraw_amount, self.__holder))
+            print("\n- withdraw - SUCCESS - \n  withdraw {} from {}\n  {} balance: {}".format(withdraw_amount, self.__holder, self.__holder, self.__balance))
             return True
         else:
-            print("!! withdraw - FAILED - \n   input withdrawl ammount = {} | is negative, not a number or bigger than the balance\n"
-                  "   balance: {}".format(withdraw_amount, self.__balance))
+            print("\n!! withdraw - FAILED - \n   input withdrawl ammount = {} | is negative, not a number or bigger than the balance\n"
+                  "   {} balance: {}".format(withdraw_amount, self.__holder, self.__balance))
             return False
 
     # setter method transfer money from one instance object to another
@@ -104,8 +105,8 @@ class BankAccount:
         check_sum_transfer_withdraw =self.withdraw(transfer_ammount)
 
         if check_sum_transfer_withdraw:
-            print("- transfer - SUCCESS -\n  {} from {} to bank account of {} - SUCCESS -".format(transfer_ammount, self.__holder,
-                                                                       transfer_object.get_holder_name()))
+            print("\n- transfer - SUCCESS -\n  {} from {} to bank account of {} \n  {} balance: {}".format(transfer_ammount, self.__holder,
+                                                                       transfer_object.get_holder_name(), self.__holder, self.__balance))
 
             transfer_object.deposit(transfer_ammount)
 
@@ -116,7 +117,7 @@ class BankAccount:
 
 
 
-account1 = BankAccount("Bender")
+account1 = BankAccount("Bender", "15600")
 print(account1)
 account1.withdraw(100)
 account1.deposit(1000)
@@ -125,7 +126,7 @@ print(account1)
 account2 = BankAccount("Marvin")
 account1.transfer(account2, 1000)
 account1.transfer(account2, 500)
-account2.deposit("lkjklj")
+account2.deposit("200")
 print(account1)
 del account1
 print(account2)
