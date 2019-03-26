@@ -12,11 +12,13 @@ class BankAccount:
         """
         # assign holder name to instance attribute
         self.__holder = holder
-        self.irgendwas = None
+        # transfer_fee for a transfer call
+        self.__transfer_fee = 0.5
+
         # check if input balance is a number and not negative - if not a positive number raise a ValueError and stop instance creation
-        if float(balance) >= 0. :
+        if type(balance) is not str and balance >= 0.:
             # if balance input is valid assign it to instance attribute
-            self.__balance = float(balance)
+            self.__balance = balance
             print("\n- Creating Bank Account for {}\n  balance: {}".format(self.__holder, self.__balance))
         else:
             # raise error and print screenmessage and abort instantiation of class if input is not valid
@@ -65,8 +67,8 @@ class BankAccount:
         :param deposite_amount:     a number - is checked if valid
         :return:                    True / False  - depending if deposit was possible or not
         """
-        if float(deposite_amount) > 0:
-            self.__balance += float(deposite_amount)
+        if type(deposite_amount) is not str and deposite_amount > 0:
+            self.__balance += deposite_amount
             print("\n- deposit - SUCCESS -\n  deposit {} to {} \n  {} balance: {}".format(deposite_amount, self.__holder, self.__holder, self.__balance))
             return True
         else:
@@ -85,8 +87,8 @@ class BankAccount:
         :param withdraw_amount:     a number - is checked if valid
         :return:                    True / False  - depending if withdrawl is possible or not
         """
-        if float(withdraw_amount) <= self.__balance and float(withdraw_amount) > 0:
-            self.__balance -= float(withdraw_amount)
+        if type(withdraw_amount) is not str and withdraw_amount <= self.__balance and withdraw_amount > 0:
+            self.__balance -= withdraw_amount
             print("\n- withdraw - SUCCESS - \n  withdraw {} from {}\n  {} balance: {}".format(withdraw_amount, self.__holder, self.__holder, self.__balance))
             return True
         else:
@@ -98,11 +100,13 @@ class BankAccount:
     def transfer(self,transfer_object,transfer_ammount):
         """
         allows to transfer a certain amount of money from one class to the other
+        each call of the transfer method costs a defined amount of money specified in the attribute self.__transfer_fee
         :param object: other class instance
         :param transfer_ammount: ammount of money that will be subtracted from self and deposit at the other instance
         :return: True/False if transfer is valid
         """
-        check_sum_transfer_withdraw =self.withdraw(transfer_ammount)
+        print("\n- START TRANSFER from {} to bank account of {}\n  transfer fee: {}".format(self.__holder, transfer_object.get_holder_name(), self.__transfer_fee))
+        check_sum_transfer_withdraw =self.withdraw(transfer_ammount+self.__transfer_fee)
 
         if check_sum_transfer_withdraw:
             print("\n- transfer - SUCCESS -\n  {} from {} to bank account of {} \n  {} balance: {}".format(transfer_ammount, self.__holder,
@@ -117,7 +121,7 @@ class BankAccount:
 
 
 
-account1 = BankAccount("Bender", "15600")
+account1 = BankAccount("Bender")
 print(account1)
 account1.withdraw(100)
 account1.deposit(1000)
@@ -126,20 +130,9 @@ print(account1)
 account2 = BankAccount("Marvin")
 account1.transfer(account2, 1000)
 account1.transfer(account2, 500)
-account2.deposit("200")
+account2.deposit(-500)
 print(account1)
 del account1
 print(account2)
 
 
-#konto1 = BankAccount("Paul", "200")
-#konto2 = BankAccount("Andi", "3000")
-#konto1.get_holder()
-#konto1._BankAccount__balance = -1000
-#konto1.withdraw(6000)
-#konto1._BankAccount__holder = "Josef"
-#konto1.deposit(300)
-#print(konto1.__dict__)
-#print(konto1)
-#konto2.transfer(konto1, 200)
-#print(konto1)
