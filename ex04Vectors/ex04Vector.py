@@ -4,6 +4,7 @@
 # Gruppe A
 
 import copy
+import math
 
 class Vector:
     """
@@ -18,6 +19,9 @@ class Vector:
 
     def __getitem__(self, key):
         return self._vector_data[key]
+    def __setitem__(self, key, value):
+        self._vector_data[key] = value
+        print(self._vector_data)
 
     def __str__(self):
         start_str = "["
@@ -29,11 +33,22 @@ class Vector:
         return start_str[:-1] + end_str
 
 
+    # geter methods
+    def norm(self):
+        return_norm_val = 0
+        for item in self._vector_data:
+            return_norm_val += math.sqrt(item)
+        return return_norm_val
+
+
+
 v1 = Vector([1,2,3,4,5])
 print(len(v1))
 print(v1)
 print(v1[-1])
 print(v1._vector_data)
+print(v1.norm())
+v1[2]=100
 
 
 
