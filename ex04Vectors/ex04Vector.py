@@ -192,7 +192,7 @@ class Vector3d(Vector):
     @property
     def z(self):
         """
-        defines z as property and allowes it to be called from outside of the class and get the value for the z coordinate
+        defines z as property and allowes it to be called from outside of the class Vector3d and get the value for the z coordinate
         in the protected _vector_data attribute
 
         :return: number - z value of _vector_data
