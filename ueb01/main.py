@@ -10,6 +10,7 @@ class Epoch():
     def __init__(self, time):
 
         if isinstance(time, datetime.datetime):
+            print("Create Epoch with time: ", time)
             self.__time = time          # has to be of type datetime
         else:
             raise ValueError("!! The input time is not of type datetime.datetime !!")
@@ -50,7 +51,8 @@ def read_obs_data(input_file_path, input_start_epoch_seconds):
             print("t_sec_str:   ", t_sec_str)
             print("start epoch: ", datetime.datetime.fromtimestamp(input_start_epoch_seconds))
             print("new   epoch: ", new_epoch, " - type: ", type(new_epoch))
-            #observation_dict.append(Epoch(datetime.datetime.from))
+
+            observation_dict.append(Epoch(new_epoch))
 
             cou += 1
             if cou == 10:
