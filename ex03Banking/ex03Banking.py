@@ -1,3 +1,8 @@
+# Paul Arzberger
+# 00311430
+# Informatics 2 - SS19
+# Gruppe A
+
 class BankAccount:
     """
     Class for Bankaccounts
