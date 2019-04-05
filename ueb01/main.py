@@ -1,23 +1,31 @@
 import datetime
 
+# =====================================================================================
+# Class Definitions
+# =====================================================================================
 
-class Epoch():
+class Epoch:
     """
-    class Epoch contains the time attribute and is the base class for the classes
+    class Epoch contains the time attribute of type datetime and is the base class for the classes
     PositionEpoch and PolarEpoch
     """
-
+    # Constructor
     def __init__(self, time):
-
+        """
+        creates an instance of class Epoch and assignes the instance attribute time a datetime-value
+        :param time: of type datetime
+        """
         if isinstance(time, datetime.datetime):
-            print("Create Epoch with time: ", time)
+            print("Create new Epoch instance with time: ", time)
             self.__time = time          # has to be of type datetime
         else:
             raise ValueError("!! The input time is not of type datetime.datetime !!")
 
+    # string representation if you print the instance on the screen
     def __str__(self):
         return "Timeepoch {}".format(self.time)
-    # make the private attribute accessible for the public
+
+    # make the private attribute accessible for the public as a property
     @property
     def time(self):
         return self.__time
@@ -26,12 +34,34 @@ class Epoch():
     def time(self, time):
         self.__time = time
 
+class PositionEpoch(Epoch):
+
+    #Constructor
+    def __init__(self, time, x=0., y=0., z=0.):
+        super().__init__(time)
+        try:
+            if type(x) in [str, int, float]:
+                self.__x = x
+
+        elif type(y) in [str, int, float]:
+            self.__y = y
+        elif type(z) in [str, int, float]:
+            self.__z = z
+        else:
+            raise ValueError("!! The input x: {}-{} - y: {}-{} - z: {}-{} is not a useable\n"
+                             "input must be a number or at least typecastable to a number"
+                             .format(x, type(x, y, type(y), z, type(z))))
+
+    def __str__(self):
+        return "PositionEpoch Instance\nx={}\ny={}\nz={}".format(self.__x, self.__y, self.__z)
+
+
+
 # =====================================================================================
 # Function listing
 # =====================================================================================
 
 def read_obs_data(input_file_path, input_start_epoch_seconds):
-
 
     # open file with context manager
     with open(input_file_path,"r") as file:
@@ -46,9 +76,12 @@ def read_obs_data(input_file_path, input_start_epoch_seconds):
             [t_sec_str, dist_m_str, zenit_rad_str, azimuth_rad_str] = line.rstrip("\n").split()
 
             # calculate new epoch with timeinformation of type datetime
-            start_epoch_seconds += float(t_sec_str)
-            new_epoch = datetime.datetime.fromtimestamp(start_epoch_seconds)
-            print("t_sec_str:   ", t_sec_str)
+            print("t_sec_str: ", t_sec_str)
+            print("t_sec_str float:   ", float(t_sec_str))
+
+
+            new_epoch = datetime.datetime.fromtimestamp(start_epoch_seconds + float(t_sec_str))
+
             print("start epoch: ", datetime.datetime.fromtimestamp(input_start_epoch_seconds))
             print("new   epoch: ", new_epoch, " - type: ", type(new_epoch))
 
@@ -58,8 +91,12 @@ def read_obs_data(input_file_path, input_start_epoch_seconds):
             if cou == 10:
                 break
 
-
     pass
+
+# =====================================================================================
+# Main Proramm
+# =====================================================================================
+
 
 if __name__ == "__main__":
 
@@ -77,6 +114,7 @@ if __name__ == "__main__":
 
     read_obs_data("obsDrone.txt", start_epoch_seconds)
 
-
+    check = PositionEpoch(start_epoch_datetime_object, 10, "100", "kjhkjh")
+    print(check)
 
     print("Programm ENDE")
