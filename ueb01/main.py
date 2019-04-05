@@ -39,22 +39,21 @@ class PositionEpoch(Epoch):
     #Constructor
     def __init__(self, time, x=0., y=0., z=0.):
         super().__init__(time)
-        try:
-            if type(x) in [str, int, float]:
-                self.__x = x
 
-        elif type(y) in [str, int, float]:
-            self.__y = y
-        elif type(z) in [str, int, float]:
-            self.__z = z
-        else:
-            raise ValueError("!! The input x: {}-{} - y: {}-{} - z: {}-{} is not a useable\n"
-                             "input must be a number or at least typecastable to a number"
-                             .format(x, type(x, y, type(y), z, type(z))))
+        try:
+            if float(x) and float(y) and float(z):
+                self.__x = x
+                self.__y = y
+                self.__z = z
+        except ValueError:
+            print("!!ERROR Constructor: \n  The input x: {} - {} - y: {} - {} - z: {} - {} is not useable\n"
+                             "  input must be a number or at least typecastable to a number"
+                             .format(x, type(x), y, type(y), z, type(z)))
+            # delete instance if input parameters are wrong
+            del self
 
     def __str__(self):
         return "PositionEpoch Instance\nx={}\ny={}\nz={}".format(self.__x, self.__y, self.__z)
-
 
 
 # =====================================================================================
@@ -115,6 +114,7 @@ if __name__ == "__main__":
     read_obs_data("obsDrone.txt", start_epoch_seconds)
 
     check = PositionEpoch(start_epoch_datetime_object, 10, "100", "kjhkjh")
+    print(type(check))
     print(check)
 
     print("Programm ENDE")
