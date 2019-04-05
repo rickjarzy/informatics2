@@ -1,135 +1,51 @@
 import datetime
-
-# =====================================================================================
-# Class Definitions
-# =====================================================================================
-
-class Epoch:
-    """
-    class Epoch contains the time attribute of type datetime and is the base class for the classes
-    PositionEpoch and PolarEpoch
-    """
-    # Constructor
-    def __init__(self, time, epoch_type=""):
-        """
-        creates an instance of class Epoch and assignes the instance attribute time a datetime-value
-        :param time: of type datetime
-        :param epoch_type: string - that is handed to the screenprint and defines which of the inheriting classes is created.
-                                    if the epoch_type is Empty a default empty string is handed to the print function
-        """
-        if isinstance(time, datetime.datetime):
-            print("+ Creating new {}Epoch instance with time: {}".format(epoch_type, time) )
-            #print("  type: ", type(time))
-            self.__time = time          # has to be of type datetime
-        else:
-            raise ValueError("!! The input time is not of type datetime.datetime !!")
-
-    # string representation if you print the instance on the screen
-    def __str__(self):
-        return "Timeepoch {}".format(self.time)
-
-    # make the private attribute accessible for the public as a property
-    @property
-    def time(self):
-        return self.__time
-
-    @time.setter
-    def time(self, time):
-        self.__time = time
-
-class PositionEpoch(Epoch):
-
-    #Constructor
-    def __init__(self, time, x=0., y=0., z=0.):
-        super().__init__(time, "Position")
-
-        try:
-            if isinstance(float(x), float) and isinstance(float(y), float) and isinstance(float(z), float):
-                self.__x = x
-                self.__y = y
-                self.__z = z
-                print("  x={}\n  y={}\n  z={}".format(self.__x, self.__y, self.__z))
-
-        except ValueError:
-            print("!!ERROR Constructor: \n  one of he inputparameters x: {} - {} - y: {} - {} - z: {} - {} is not useable\n"
-                             "  input must be a number or at least typecastable to a number"
-                             .format(x, type(x), y, type(y), z, type(z)))
-            # delete instance if input parameters are wrong
-            del self
-
-    def __str__(self):
-        return "PositionEpoch Instance {}\nx={}\ny={}\nz={}".format(self.time, self.__x, self.__y, self.__z)
-
-    def __del__(self):
-        print("- Delete PositionEpoch Instance {}\n  x={}\n  y={}\n  z={}".format(self.time, self.__x, self.__y, self.__z))
-
-class PolarEpoch(Epoch):
-
-    # constructor
-    def __init__(self, time, distance=0., zenith=0., azimuth=0.):
-        super().__init__(time, "Polar")
-        try:
-            if float(distance) and float(zenith) and float(azimuth):
-                self.__distance = distance
-                self.__zenith = zenith
-                self.__azimuth = azimuth
-                print("  distance={}\n  zenith={}\n  azimuth={}".format(self.__x, self.__y, self.__z))
-
-        except ValueError:
-            print("!!ERROR Constructor: \n  one of he inputparameters distance: {} - {} - zenith: {} - {} - azimuth: {} - {} is not useable\n"
-                             "  input must be a number or at least typecastable to a number"
-                             .format(distance, type(distance), zenith, type(zenith), azimuth, type(azimuth)))
-            # delete instance if input parameters are wrong
-            del self
-    # string representation if you print the class to the screen
-    def __str__(self):
-        return "PolarEpoch Instance {}\n  distance={}\n  zenith={}\n  azimuth={}".format(self.time, self.__distance, self.__zenith, self.__azimuth)
-
-    def __del__(self):
-        print("- Delete PolarEpoch Instance {}\n  distance={}\n  zenith={}\n  azimuth={}".format(self.time, self.__distance, self.__zenith, self.__azimuth))
+from .Epochs import Epochs
 
 # =====================================================================================
 # Function listing
 # =====================================================================================
 
-def read_obs_data(input_file_path, input_start_epoch_seconds, input_class_type):
+def read_obs_data(input_file_path, input_start_epoch_str, verbose=False):
+    """
+    Function to read out the observed tachimeter data and the laser scanner data. it takes the filepath as input and the start_epoch
+    :param input_file_path:         string - filepath to the file to read out
+    :param input_start_epoch_str:   string - string of observation starttime in datetime format
+    :param verbose:                 True/False - per default False. is handed to the class Instance and allows to print some instatiation screening info
+    :return:                  list - list with instances of PolarEpochs
+    """
+
+    #convert start epoch string into datetime object
+    start_epoch_datetime_object = datetime.datetime.strptime(input_start_epoch_str, '%Y-%m-%d %H:%M:%S')
+
+    #convert start_epoch of type datetime into total seconds type float
+    start_epoch_seconds = start_epoch_datetime_object.timestamp()
 
     # open file with context manager
     with open(input_file_path,"r") as file:
 
-        start_epoch_seconds = input_start_epoch_seconds
-
-        observation_list = []   # will be returned
+        observation_list = []   # will be returned with Objects of type PolarEpoch
         cou = 0
+
         for line in file.readlines():
 
-            # read out each line of the file, strip the \n at the end and split it at the white space
+            # read out each line of the file, strip the \n at the end and split it at the white spaces to tokens and store them in a list
             [t_sec_str, dist_m_str, zenit_rad_str, azimuth_rad_str] = line.rstrip("\n").split()
 
-            # calculate new epoch with timeinformation of type datetime
-            print("- t_sec_str: ", t_sec_str)
-            print("- t_sec_str float:   ", float(t_sec_str))
-
-
+            # add the observed time from the file to the start time epoch to get the new epoch in datetime format
             new_epoch = datetime.datetime.fromtimestamp(start_epoch_seconds + float(t_sec_str))
 
-            print("- start epoch: ", datetime.datetime.fromtimestamp(input_start_epoch_seconds))
-            print("- new   epoch: ", new_epoch, " - type: ", type(new_epoch))
-
-            if input_class_type == "PolarEpoch":
-                observation_list.append(PolarEpoch(new_epoch))
-            else:
-                observation_list.append(PositionEpoch(new_epoch))
+            # append each observation to the returnlist as type PolarEpoch
+            observation_list.append(Epochs.PolarEpoch(new_epoch, float(dist_m_str), float(zenit_rad_str), float(azimuth_rad_str), verbose))
 
             cou += 1
             if cou == 10:
                 break
         print("- len of observation_list: ", len(observation_list))
-        print(observation_list[0])
-    pass
+
+    return observation_list
 
 # =====================================================================================
-# Main Proramm
+# Main Programm
 # =====================================================================================
 
 
@@ -138,20 +54,15 @@ if __name__ == "__main__":
     # start time epoch as string taken from the lab report
     start_epoch_string = "2018-03-13 15:10:00"
 
-    #convert start epoch string into datetime object
-    start_epoch_datetime_object = datetime.datetime.strptime(start_epoch_string, '%Y-%m-%d %H:%M:%S')
-
-    #convert start_epoch of type datetime into total seconds type float
-    start_epoch_seconds = start_epoch_datetime_object.timestamp()
-
-
     print("Start Import")
 
-    read_obs_data("obsDrone.txt", start_epoch_seconds, "PositionEpoch")
+    # read out laser scanner data - add third function parameter verbose=True to see if class objects get deleted
+    scanner_polar_epochs_list = read_obs_data("obsDrone.txt", start_epoch_string)
 
-    check = PositionEpoch(start_epoch_datetime_object, 10, "100", "100")
-    check2 = PolarEpoch(start_epoch_datetime_object, 10, "100", "59.456")
-    print(type(check))
-    print(check)
+    # read out tachymeter data - add third function parameter verbose=True to see if class objects get deleted
+    tachy_polar_epochs_list = read_obs_data("obsTachy.txt", start_epoch_string, verbose=True)
+
+    print("tachy 1 - zenith: ", tachy_polar_epochs_list[0].zenith)
+    print(tachy_polar_epochs_list[0])
 
     print("Programm ENDE")
