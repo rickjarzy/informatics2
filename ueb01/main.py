@@ -45,11 +45,10 @@ class PositionEpoch(Epoch):
 
         try:
             if isinstance(float(x), float) and isinstance(float(y), float) and isinstance(float(z), float):
-                print("assign values")
                 self.__x = x
                 self.__y = y
                 self.__z = z
-                print("+ Create PositionEpoch Instance {}\nx={}\ny={}\nz={}".format(self.__time, self.__x, self.__y, self.__z))
+                print("  x={}\n  y={}\n  z={}".format(self.__x, self.__y, self.__z))
 
         except ValueError:
             print("!!ERROR Constructor: \n  one of he inputparameters x: {} - {} - y: {} - {} - z: {} - {} is not useable\n"
@@ -59,10 +58,10 @@ class PositionEpoch(Epoch):
             del self
 
     def __str__(self):
-        return "PositionEpoch Instance {}\nx={}\ny={}\nz={}".format(self.__time, self.__x, self.__y, self.__z)
+        return "PositionEpoch Instance {}\nx={}\ny={}\nz={}".format(self.time, self.__x, self.__y, self.__z)
 
     def __del__(self):
-        print("- Delete PositionEpoch Instance {}\nx={}\ny={}\nz={}".format(self.__time, self.__x, self.__y, self.__z))
+        print("- Delete PositionEpoch Instance {}\n  x={}\n  y={}\n  z={}".format(self.time, self.__x, self.__y, self.__z))
 
 class PolarEpoch(Epoch):
 
@@ -74,7 +73,7 @@ class PolarEpoch(Epoch):
                 self.__distance = distance
                 self.__zenith = zenith
                 self.__azimuth = azimuth
-                print("+ Create PolarEpoch Instance {}\ndistance={}\nzenith={}\nazimuth={}".format(self.__time, self.__x, self.__y, self.__z))
+                print("  distance={}\n  zenith={}\n  azimuth={}".format(self.__x, self.__y, self.__z))
 
         except ValueError:
             print("!!ERROR Constructor: \n  one of he inputparameters distance: {} - {} - zenith: {} - {} - azimuth: {} - {} is not useable\n"
@@ -84,10 +83,10 @@ class PolarEpoch(Epoch):
             del self
     # string representation if you print the class to the screen
     def __str__(self):
-        return "PolarEpoch Instance {}\ndistance={}\nzenith={}\nazimuth={}".format(self.__time, self.__distance, self.__zenith, self.__azimuth)
+        return "PolarEpoch Instance {}\n  distance={}\n  zenith={}\n  azimuth={}".format(self.time, self.__distance, self.__zenith, self.__azimuth)
 
     def __del__(self):
-        print("- Delete PolarEpoch Instance {}\ndistance={}\nzenith={}\nazimuth={}".format(self.__time, self.__distance, self.__zenith, self.__azimuth))
+        print("- Delete PolarEpoch Instance {}\n  distance={}\n  zenith={}\n  azimuth={}".format(self.time, self.__distance, self.__zenith, self.__azimuth))
 
 # =====================================================================================
 # Function listing
