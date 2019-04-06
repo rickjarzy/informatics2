@@ -6,6 +6,7 @@
 import datetime
 import numpy
 from matplotlib import pyplot as plt
+import time
 # =====================================================================================
 # Class Definitions
 # =====================================================================================
@@ -262,7 +263,7 @@ def create_datetime_object(input_time):
 # =====================================================================================
 
 if __name__ == "__main__":
-
+    start = time.clock()
     # start time epoch as string taken from the lab report
     start_epoch_string = "2018-03-13 15:10:00"
 
@@ -297,6 +298,7 @@ if __name__ == "__main__":
 
     plt.figure()
     plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list])
+    print("Time elapsed: ", time.clock() - start, " [sec]")
     plt.show()
 
 
