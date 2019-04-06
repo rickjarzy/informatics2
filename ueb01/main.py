@@ -4,6 +4,8 @@
 # Gruppe A - Programm 1: Drohnengetragenes Laserscanning
 
 import datetime
+import numpy
+from matplotlib import pyplot as plt
 # =====================================================================================
 # Class Definitions
 # =====================================================================================
@@ -66,6 +68,14 @@ class PositionEpoch(Epoch):
 
     #Constructor
     def __init__(self, time, x=0., y=0., z=0., verbose_input=False):
+        """
+
+        :param time:
+        :param x:
+        :param y:
+        :param z:
+        :param verbose_input:
+        """
         super().__init__(time, "Position", verbose_input)
 
         try:
@@ -110,7 +120,7 @@ class PositionEpoch(Epoch):
 
     # string representation of the instance
     def __str__(self):
-        return "PositionEpoch Instance {}\nx={} y={} z={}\n".format(self.time, self.__x, self.__y, self.__z)
+        return "PositionEpoch Instance {}\n   x={} y={} z={}\n".format(self.time, self.__x, self.__y, self.__z)
 
     # if verbose in the base class is true - a message will be printed out when the instance DIES
     def __del__(self):
@@ -122,6 +132,14 @@ class PolarEpoch(Epoch):
 
     # constructor
     def __init__(self, time, distance=0., zenith=0., azimuth=0., verbose_input=False):
+        """
+
+        :param time:
+        :param distance:
+        :param zenith:
+        :param azimuth:
+        :param verbose_input:
+        """
         super().__init__(time, "Polar", verbose_input)
         try:
             if float(distance) and float(zenith) and float(azimuth):
@@ -168,7 +186,7 @@ class PolarEpoch(Epoch):
 
     # string representation of the instance if you print the class to the screen
     def __str__(self):
-        return "PolarEpoch Instance {}\n  distance={} zenith={} azimuth={}\n".format(self.time, self.__distance, self.__zenith, self.__azimuth)
+        return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n".format(self.time, self.__distance, self.__zenith, self.__azimuth)
 
     def __del__(self):
 
@@ -182,26 +200,23 @@ class PolarEpoch(Epoch):
 # Function listing
 # =====================================================================================
 
-def read_obs_data(input_file_path, input_start_epoch_str, verbose=False):
+def read_obs_data(input_file_path, input_start_epoch, verbose=False):
     """
     Function to read out the observed tachimeter data and the laser scanner data. it takes the filepath as input and the start_epoch
     :param input_file_path:         string - filepath to the file to read out
-    :param input_start_epoch_str:   string - string of observation starttime in datetime format
+    :param input_start_epoch:   datetime - startepoch of the tachymeter measurements
     :param verbose:                 True/False - per default False. is handed to the class Instance and allows to print some instatiation screening info
     :return:                  list - list with instances of PolarEpochs
     """
 
-    #convert start epoch string into datetime object
-    start_epoch_datetime_object = datetime.datetime.strptime(input_start_epoch_str, '%Y-%m-%d %H:%M:%S')
-
     #convert start_epoch of type datetime into total seconds type float
-    start_epoch_seconds = start_epoch_datetime_object.timestamp()
+    start_epoch_seconds = input_start_epoch.timestamp()
 
     # open file with context manager
     with open(input_file_path,"r") as file:
 
         observation_list = []   # will be returned with Objects of type PolarEpoch
-        cou = 0
+        #cou = 0
 
         for line in file.readlines():
 
@@ -214,32 +229,76 @@ def read_obs_data(input_file_path, input_start_epoch_str, verbose=False):
             # append each observation to the returnlist as type PolarEpoch
             observation_list.append(PolarEpoch(new_epoch, float(dist_m_str), float(zenit_rad_str), float(azimuth_rad_str), verbose))
 
-            cou += 1
-            if cou == 10:
-                break
-        print("- len of observation_list: ", len(observation_list))
+            #if cou == 15:
+            #    break
+            #cou += 1
+
+        print("- len of observation_list - %s : " % input_file_path, len(observation_list))
 
     return observation_list
+
+
+def bubble_sort(input_list):
+    """
+
+    :param input_list:
+    :return:
+    """
+
+    number_of_elements = len(input_list)
+
+    for max_iterations in range(number_of_elements-1, 0, -1):       # walk from biggest/last to lowest/first element
+        for index in range(max_iterations):
+            if input_list[index].time > input_list[index+1].time:             # if the neighbour right to the actual position is bigger
+                input_list[index], input_list[index +1] = input_list[index +1], input_list[index]   # switch positions
+
+    return input_list
+
+def create_datetime_object(input_time):
+    pass
 
 # =====================================================================================
 # Main Programm
 # =====================================================================================
-
 
 if __name__ == "__main__":
 
     # start time epoch as string taken from the lab report
     start_epoch_string = "2018-03-13 15:10:00"
 
+    #convert start epoch string into datetime object
+    start_epoch_datetime_object = datetime.datetime.strptime(start_epoch_string, '%Y-%m-%d %H:%M:%S')
+
+    tachymeter_position = PositionEpoch(start_epoch_datetime_object, -51.280, -4.373, 1.340, True)
+
     print("Start Import")
 
     # read out laser scanner data - add third function parameter verbose=True to see if class objects get deleted
-    scanner_polar_epochs_list = read_obs_data("obsDrone.txt", start_epoch_string)
+    scanner_polar_epochs_list = read_obs_data("obsDrone.txt", start_epoch_datetime_object)
 
     # read out tachymeter data - add third function parameter verbose=True to see if class objects get deleted
-    tachy_polar_epochs_list = read_obs_data("obsTachy.txt", start_epoch_string, verbose=True)
+    tachy_polar_epochs_list = read_obs_data("obsTachy.txt", start_epoch_datetime_object)
 
-    print("tachy 1 - zenith: ", tachy_polar_epochs_list[0].zenith)
-    print(tachy_polar_epochs_list[0])
+    # sorts the chaotic tachymeter observations and writes it back on the variable
+    # you also could do bubble_sort(tachy_polar_epochs_list) but its not that easy to read if the return value is missing
+    tachy_polar_epochs_list = bubble_sort(tachy_polar_epochs_list)
+
+    drone_traj_position_list = [PositionEpoch(polarepoch.time,
+                                              polarepoch.distance * numpy.sin(polarepoch.zenith) * numpy.cos(polarepoch.azimuth),
+                                              polarepoch.distance * numpy.sin(polarepoch.zenith) * numpy.sin(polarepoch.azimuth),
+                                              polarepoch.distance * numpy.cos(polarepoch.zenith),
+                                              ) for polarepoch in tachy_polar_epochs_list]
+
+    print("  len of position_list: ", len(drone_traj_position_list))
+
+    print("   First PolarEpoch: ", tachy_polar_epochs_list[6])
+    print("   First PositionEpoch: ", drone_traj_position_list[6])
+
+
+    plt.figure()
+    plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list])
+    plt.show()
+
+
 
     print("Programm ENDE")
