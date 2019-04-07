@@ -71,11 +71,11 @@ class PositionEpoch(Epoch):
     def __init__(self, time, x=0., y=0., z=0., verbose_input=False):
         """
 
-        :param time:
-        :param x:
-        :param y:
-        :param z:
-        :param verbose_input:
+        :param time: datetime - the epochs time when it was recorded
+        :param x:    float - x coordinate
+        :param y:    float - y coordinate
+        :param z:    float - z coordinate
+        :param verbose_input: bool - if set true, instantiantion and deletion will print messeges to the screen
         """
         super().__init__(time, "Position", verbose_input)
 
@@ -94,6 +94,16 @@ class PositionEpoch(Epoch):
                              .format(x, type(x), y, type(y), z, type(z)))
             # delete instance if input parameters are wrong
             del self
+
+    # string representation of the instance
+    def __str__(self):
+        return "PositionEpoch Instance {}\n   x={} y={} z={}\n".format(self.time, self.__x, self.__y, self.__z)
+
+    # if verbose in the base class is true - a message will be printed out when the instance DIES
+    def __del__(self):
+        if self.verbose:
+            print("- Delete PositionEpoch Instance {}\n  x={} y={} z={}".format(self.time, self.__x, self.__y,
+                                                                                self.__z))
 
     # PROPERTIES
     # ---------------------------
@@ -119,15 +129,6 @@ class PositionEpoch(Epoch):
     def z(self, value):
         self.__z = value
 
-    # string representation of the instance
-    def __str__(self):
-        return "PositionEpoch Instance {}\n   x={} y={} z={}\n".format(self.time, self.__x, self.__y, self.__z)
-
-    # if verbose in the base class is true - a message will be printed out when the instance DIES
-    def __del__(self):
-        if self.verbose:
-            print("- Delete PositionEpoch Instance {}\n  x={} y={} z={}".format(self.time, self.__x, self.__y, self.__z))
-
 
 class PolarEpoch(Epoch):
 
@@ -147,6 +148,7 @@ class PolarEpoch(Epoch):
                 self.__distance = distance
                 self.__zenith = zenith
                 self.__azimuth = azimuth
+                self.__tachymeter_epoch = None
 
                 if self.verbose:
                     print("  distance={} zenith={} azimuth={}".format(self.__distance, self.__zenith, self.__azimuth))
@@ -157,6 +159,20 @@ class PolarEpoch(Epoch):
                              .format(distance, type(distance), zenith, type(zenith), azimuth, type(azimuth)))
             # delete instance if input parameters are wrong
             del self
+
+    # string representation of the instance if you print the class to the screen
+    def __str__(self):
+        return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n".format(self.time, self.__distance, self.__zenith, self.__azimuth)
+
+    def __del__(self):
+
+        # if verbose in the base class is true - a message will be printed out when the instance DIES
+        if self.verbose:
+            print("- Delete PolarEpoch Instance {}\n  distance={} zenith={} azimuth={}".format(self.time, self.__distance, self.__zenith, self.__azimuth))
+
+    def __eq__(self, other):
+
+        pass
 
     # PROPERTIES
     # ---------------------------
@@ -185,38 +201,53 @@ class PolarEpoch(Epoch):
     def azimuth(self, value):
         self.__azimuth = value
 
-    # string representation of the instance if you print the class to the screen
-    def __str__(self):
-        return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n".format(self.time, self.__distance, self.__zenith, self.__azimuth)
+    @property
+    def tachymeter_epoch(self):
+        return self.__tachymeter_epoch
 
-    def __del__(self):
+    @tachymeter_epoch.setter
+    def tachymeter_epoch(self, value):
+        """
+        sets the corresponding tachymeter epoch to the laser scanner epoch
+        :param value: PolarEpoch instance
+        :return: none
+        """
+        if isinstance(value, PolarEpoch):
+            self.__tachymeter_epoch = value
+        else:
+            raise ValueError("!! ERROR - handed instance is not of type Polar Epoch\n   input: {} is of type {}".format(value, type(value)))
 
-        # if verbose in the base class is true - a message will be printed out when the instance DIES
-        if self.verbose:
-            print("- Delete PolarEpoch Instance {}\n  distance={} zenith={} azimuth={}".format(self.time, self.__distance, self.__zenith, self.__azimuth))
+    # getter methods to calculate the x, y, z coordinates of the polar epoch - as property
+    @property
+    def x(self):
+        return self.__distance * numpy.sin(self.__zenith) * numpy.cos(self.__azimuth)
+
+    @property
+    def y(self):
+        return self.__distance * numpy.sin(self.__zenith) * numpy.sin(self.__azimuth)
+
+    @property
+    def z(self):
+        return self.__distance * numpy.cos(self.__zenith)
 
 
 class Timer():
+    """
+    Timer class to check how long the algorithm runs
+    """
     def __init__(self):
         self.__starttime = None
         self.__endtime = None
 
-    @property
-    def starttime(self):
-        return self.__starttime
-
-    @starttime.setter
-    def starttime(self):
+    # overwrite the enter method
+    def __enter__(self):
+        print("Start taking Time ...")
         self.__starttime = time.process_time()
+        return self
 
-    @property
-    def endtime(self):
-        return self.__endtime
-
-    @endtime.setter
-    def endtime(self):
-        self.__endtime = time.process_time()
-
+    # overwrite the exit method
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("Process took {} [sec] to finish\n".format(time.process_time()-self.__starttime))
 # =====================================================================================
 # Function listing
 # =====================================================================================
@@ -283,44 +314,42 @@ def create_datetime_object(input_time):
 # =====================================================================================
 
 if __name__ == "__main__":
-    start = time.process_time()
-    # start time epoch as string taken from the lab report
-    start_epoch_string = "2018-03-13 15:10:00"
 
-    #convert start epoch string into datetime object
-    start_epoch_datetime_object = datetime.datetime.strptime(start_epoch_string, '%Y-%m-%d %H:%M:%S')
+    with Timer():
+        # start time epoch as string taken from the lab report
+        start_epoch_string = "2018-03-13 15:10:00"
 
-    tachymeter_position = PositionEpoch(start_epoch_datetime_object, -51.280, -4.373, 1.340, True)
+        #convert start epoch string into datetime object
+        start_epoch_datetime_object = datetime.datetime.strptime(start_epoch_string, '%Y-%m-%d %H:%M:%S')
 
-    print("Start Import")
+        tachymeter_position = PositionEpoch(start_epoch_datetime_object, -51.280, -4.373, 1.340, True)
 
-    # read out laser scanner data - add third function parameter verbose=True to see if class objects get deleted
-    scanner_polar_epochs_list = read_obs_data("obsDrone.txt", start_epoch_datetime_object)
+        print("Start Import")
 
-    # read out tachymeter data - add third function parameter verbose=True to see if class objects get deleted
-    tachy_polar_epochs_list = read_obs_data("obsTachy.txt", start_epoch_datetime_object)
+        # read out laser scanner data - add third function parameter verbose=True to see if class objects get deleted
+        scanner_polar_epochs_list = read_obs_data("obsDrone.txt", start_epoch_datetime_object)
 
-    # sorts the chaotic tachymeter observations and writes it back on the variable
-    # you also could do bubble_sort(tachy_polar_epochs_list) but its not that easy to read if the return value is missing
-    tachy_polar_epochs_list = bubble_sort(tachy_polar_epochs_list)
+        # read out tachymeter data - add third function parameter verbose=True to see if class objects get deleted
+        tachy_polar_epochs_list = read_obs_data("obsTachy.txt", start_epoch_datetime_object)
 
-    drone_traj_position_list = [PositionEpoch(polarepoch.time,
-                                              polarepoch.distance * numpy.sin(polarepoch.zenith) * numpy.cos(polarepoch.azimuth),
-                                              polarepoch.distance * numpy.sin(polarepoch.zenith) * numpy.sin(polarepoch.azimuth),
-                                              polarepoch.distance * numpy.cos(polarepoch.zenith),
-                                              ) for polarepoch in tachy_polar_epochs_list]
+        # sorts the chaotic tachymeter observations and writes it back on the variable
+        # you also could do bubble_sort(tachy_polar_epochs_list) but its not that easy to read if the return value is missing
+        tachy_polar_epochs_list = bubble_sort(tachy_polar_epochs_list)
+        print("tach 1 object", tachy_polar_epochs_list[0].x)
+        drone_traj_position_list = [PositionEpoch(polarepoch.time, polarepoch.x, polarepoch.y, polarepoch.z) for polarepoch in tachy_polar_epochs_list]
 
-    print("  len of position_list: ", len(drone_traj_position_list))
+        print("  len of position_list: ", len(drone_traj_position_list))
+        print("   First PolarEpoch: ", tachy_polar_epochs_list[6])
+        print("   First PositionEpoch: ", drone_traj_position_list[6])
 
-    print("   First PolarEpoch: ", tachy_polar_epochs_list[6])
-    print("   First PositionEpoch: ", drone_traj_position_list[6])
+        check_epoch = tachy_polar_epochs_list[0]
 
+        sub_list = list(filter(lambda x: x.time == check_epoch.time, scanner_polar_epochs_list))
 
-    plt.figure()
-    plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list])
-    print("Time elapsed: ", time.process_time() - start, " [sec]")
-    plt.show()
+        print("check_epoch: ", check_epoch, "\nsub_list len: ",len(sub_list))
 
+        plt.figure()
+        plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list])
+        plt.show()
 
-
-    print("Programm ENDE")
+        print("Programm ENDE")
