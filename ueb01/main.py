@@ -342,11 +342,19 @@ if __name__ == "__main__":
         print("   First PolarEpoch: ", tachy_polar_epochs_list[6])
         print("   First PositionEpoch: ", drone_traj_position_list[6])
 
-        check_epoch = tachy_polar_epochs_list[0]
 
-        sub_list = list(filter(lambda x: x.time == check_epoch.time, scanner_polar_epochs_list))
+        for check_epoch in tachy_polar_epochs_list:
 
-        print("check_epoch: ", check_epoch, "\nsub_list len: ",len(sub_list))
+            sub_list = list(filter(lambda x: x.time == check_epoch.time, scanner_polar_epochs_list))
+
+            if len(sub_list) > 0:
+                print("check_epoch: ", check_epoch, "\nsub_list len: ",len(sub_list))
+                divident = numpy.nanmean(numpy.array([item.z for item in sub_list]))
+                print("dividend: ", divident)
+
+
+            else:
+                pass
 
         plt.figure()
         plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list])
