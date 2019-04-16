@@ -30,7 +30,10 @@ class Epoch:
 
             #print("  type: ", type(time))
             self.__time = time              # has to be of type datetime
-            self.__verbose = verbose_input  # bool True or False - takes influence if info is screened during instantiation or deleting prcoess
+            self.__verbose = verbose_input  # bool True or False - takes influence if info is screened during instantiation or deleting process
+            self.__x_tachy = -51.28
+            self.__y_tachy = -4.373
+            self.__z_tachy = 1.34
 
             # if verbose is set True the instantiation information will be printed to screen
             if self.__verbose:
@@ -63,6 +66,30 @@ class Epoch:
     @verbose.setter
     def verbose(self, bool_val):
         self.__verbose = bool_val
+
+    @property
+    def x_tachy(self):
+        return self.__x_tachy
+
+    @x_tachy.setter
+    def x_tachy(self, value):
+        self.__x_tachy = value
+
+    @property
+    def y_tachy(self):
+        return self.__y_tachy
+
+    @y_tachy.setter
+    def y_tachy(self, value):
+        self.__y_tachy = value
+
+    @property
+    def z_tachy(self):
+        return self.__z_tachy
+
+    @z_tachy.setter
+    def z_tachy(self, value):
+        self.__z_tachy = value
 
 
 class PositionEpoch(Epoch):
@@ -220,15 +247,27 @@ class PolarEpoch(Epoch):
     # getter methods to calculate the x, y, z coordinates of the polar epoch - as property
     @property
     def x(self):
-        return self.__distance * numpy.sin(self.__zenith) * numpy.cos(self.__azimuth)
+        """
+        Calculates the X Part of the "Erste Hauptaufgabe" from the tachymeterposition to the droneposition and returns it
+        :return: float
+        """
+        return self.x_tachy + self.__distance * numpy.sin(self.__zenith) * numpy.cos(self.__azimuth)
 
     @property
     def y(self):
-        return self.__distance * numpy.sin(self.__zenith) * numpy.sin(self.__azimuth)
+        """
+        Calculates the Y Part of the "Erste Hauptaufgabe" from the tachymeterposition to the droneposition and returns it
+        :return: float
+        """
+        return self.y_tachy + self.__distance * numpy.sin(self.__zenith) * numpy.sin(self.__azimuth)
 
     @property
     def z(self):
-        return self.__distance * numpy.cos(self.__zenith)
+        """
+        Calculates the Z Part of the "Erste Hauptaufgabe" from the tachymeterposition to the droneposition and returns it
+        :return: float
+        """
+        return self.z_tachy + self.__distance * numpy.cos(self.__zenith)
 
 
 class Timer():
@@ -335,7 +374,9 @@ if __name__ == "__main__":
         # sorts the chaotic tachymeter observations and writes it back on the variable
         # you also could do bubble_sort(tachy_polar_epochs_list) but its not that easy to read if the return value is missing
         tachy_polar_epochs_list = bubble_sort(tachy_polar_epochs_list)
+
         print("tach 1 object", tachy_polar_epochs_list[0].x)
+
         drone_traj_position_list = [PositionEpoch(polarepoch.time, polarepoch.x, polarepoch.y, polarepoch.z) for polarepoch in tachy_polar_epochs_list]
 
         print("  len of position_list: ", len(drone_traj_position_list))
@@ -351,8 +392,6 @@ if __name__ == "__main__":
                 print("check_epoch: ", check_epoch, "\nsub_list len: ",len(sub_list))
                 divident = numpy.nanmean(numpy.array([item.z for item in sub_list]))
                 print("dividend: ", divident)
-
-
             else:
                 pass
 
