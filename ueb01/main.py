@@ -421,9 +421,10 @@ if __name__ == "__main__":
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         X, Y = numpy.meshgrid(scanner_point_measurement_x_list, scanner_point_measurement_y_list)
-        Z = numpy.array(scanner_point_measurement_z_list)
-        print("Z type: {}\n\Z len: {} \n{}".format(type(Z), len(Z), Z)
-              )
+        print("X type: {}\n\X len: {} \n{}".format(type(X), len(X), X))
+
+        Z = numpy.array(scanner_point_measurement_z_list).reshape(1, len(scanner_point_measurement_z_list))
+        print("Z type: {}\n\Z len: {} \n{}".format(type(Z), len(Z), Z))
         # Plot the surface.
         surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
                                linewidth=0, antialiased=False)
