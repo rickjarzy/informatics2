@@ -5,8 +5,12 @@
 
 import datetime
 import numpy
-from matplotlib import pyplot as plt
 import time
+
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 # =====================================================================================
 # Class Definitions
 # =====================================================================================
@@ -189,8 +193,12 @@ class PolarEpoch(Epoch):
 
     # string representation of the instance if you print the class to the screen
     def __str__(self):
-        return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n".format(self.time, self.__distance, self.__zenith, self.__azimuth)
-
+        if self.__tachymeter_epoch:
+            return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n   Tachymeter Instance {}: "\
+                .format(self.time, self.__distance, self.__zenith, self.__azimuth, self.__tachymeter_epoch.time)
+        else:
+            return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n" \
+                .format(self.time, self.__distance, self.__zenith, self.__azimuth)
     def __del__(self):
 
         # if verbose in the base class is true - a message will be printed out when the instance DIES
@@ -233,16 +241,17 @@ class PolarEpoch(Epoch):
         return self.__tachymeter_epoch
 
     @tachymeter_epoch.setter
-    def tachymeter_epoch(self, value):
+    def tachymeter_epoch(self, tachy_epoch):
         """
         sets the corresponding tachymeter epoch to the laser scanner epoch
         :param value: PolarEpoch instance
         :return: none
         """
-        if isinstance(value, PolarEpoch):
-            self.__tachymeter_epoch = value
+        print("   Assign Tachymeter Epoch to Scanner Epoch")
+        if isinstance(tachy_epoch, PolarEpoch):
+            self.__tachymeter_epoch = tachy_epoch
         else:
-            raise ValueError("!! ERROR - handed instance is not of type Polar Epoch\n   input: {} is of type {}".format(value, type(value)))
+            raise ValueError("!! ERROR - handed instance is not of type Polar Epoch\n   input: {} is of type {}".format(tachy_epoch, type(tachy_epoch)))
 
     # getter methods to calculate the x, y, z coordinates of the polar epoch - as property
     @property
@@ -383,20 +392,49 @@ if __name__ == "__main__":
         print("   First PolarEpoch: ", tachy_polar_epochs_list[6])
         print("   First PositionEpoch: ", drone_traj_position_list[6])
 
+        scanner_point_measurement_x_list = []
+        scanner_point_measurement_y_list = []
+        scanner_point_measurement_z_list = []
+        for tachy_epoch in tachy_polar_epochs_list:
 
-        for check_epoch in tachy_polar_epochs_list:
+            # filter all epochs of the scanner that are recorded at the same time like the tachy_epoch
+            sub_list_scanner_epochs = list(filter(lambda scanner_epoch: scanner_epoch.time == tachy_epoch.time, scanner_polar_epochs_list))
 
-            sub_list = list(filter(lambda x: x.time == check_epoch.time, scanner_polar_epochs_list))
+            if len(sub_list_scanner_epochs) > 0:
+                print("check_epoch: ", tachy_epoch, "\nsub_list len: ",len(sub_list_scanner_epochs))
+                scanner_point_measurement_z_list.append(numpy.nanmean(numpy.array([item.z for item in sub_list_scanner_epochs])))
+                scanner_point_measurement_x_list.append(numpy.nanmean(numpy.array([item.x for item in sub_list_scanner_epochs])))
+                scanner_point_measurement_y_list.append(numpy.nanmean(numpy.array([item.y for item in sub_list_scanner_epochs])))
 
-            if len(sub_list) > 0:
-                print("check_epoch: ", check_epoch, "\nsub_list len: ",len(sub_list))
-                divident = numpy.nanmean(numpy.array([item.z for item in sub_list]))
-                print("dividend: ", divident)
+
+                #for scanner_epoch in sub_list_scanner_epochs:
+                #    print("scanner_x: ", scanner_epoch.x, " - drone x:   ", tachy_epoch.x)
+
+
             else:
                 pass
 
         plt.figure()
         plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list])
+
+
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        X, Y = numpy.meshgrid(scanner_point_measurement_x_list, scanner_point_measurement_y_list)
+        Z = numpy.array(scanner_point_measurement_z_list)
+        print("Z type: {}\n\Z len: {} \n{}".format(type(Z), len(Z), Z)
+              )
+        # Plot the surface.
+        surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
+                               linewidth=0, antialiased=False)
+        # Customize the z axis.
+        ax.set_zlim(-1.01, 1.01)
+        ax.zaxis.set_major_locator(LinearLocator(10))
+        ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+
+        # Add a color bar which maps values to colors.
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+
         plt.show()
 
         print("Programm ENDE")
