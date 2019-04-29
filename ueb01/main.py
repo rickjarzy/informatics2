@@ -6,7 +6,7 @@
 import datetime
 import numpy
 import time
-
+import scipy.ndimage
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -369,6 +369,10 @@ if __name__ == "__main__":
         scanner_point_measurement_x_list = []
         scanner_point_measurement_y_list = []
         scanner_point_measurement_z_list = []
+
+        scanner_ground_point_full_x_list = []
+        scanner_ground_point_full_y_list = []
+        scanner_ground_point_full_z_list = []
         print("Matching Epochs ...")
 
         raster_50_50_dict = {}                # initializing the 5,45x0,50 raster where to store the laserscanner values from each drone-trajectory-line
@@ -408,11 +412,20 @@ if __name__ == "__main__":
                 # when recording stops - write out collected data to raster_50_50_dict
                 if start_recording == False and stop_recording == False:
                     print("Stop Recording - line %d" % cou_line)
-                    for z_val in raster_line:
-                        raster_50_50_dict[str(cou_line)] = raster_line
+
+                    # every second line hast to be reversed because of the drones heading changing for 180 degree
+                    if (cou_line % 2 == 0):
+
+                        for z_val in reversed(raster_line):
+                            raster_50_50_dict[str(cou_line)] = raster_line
+                    else:
+                        for z_val in raster_line:
+                            raster_50_50_dict[str(cou_line)] = raster_line
 
                 stop_recording = True
                 pass
+
+
         # get the numbers of obersvations for each laser scanner line
         max_col_list = [len(raster_50_50_dict[laser_scanner_data]) for laser_scanner_data in raster_50_50_dict]
 
@@ -420,13 +433,13 @@ if __name__ == "__main__":
         raster_50_50_arr = numpy.zeros((cou_line, max(max_col_list)))
 
         for row in raster_50_50_dict:
-            print("row: ", row)
+
             for col in range(0,len(raster_50_50_dict[row]),1):
                 raster_50_50_arr[int(row)-1, col] = raster_50_50_dict[row][col]
 
         print("Max cols: ", max(max_col_list))
         print("Raster_50_50 shape: ", raster_50_50_arr.shape)
-
+        resample_50_50 = scipy.ndimage.zoom(raster_50_50_arr, 2, order=3)
 
         # Trajectory
         plt.figure()
@@ -472,6 +485,7 @@ if __name__ == "__main__":
         ax.set_ylabel("Y Coorinates of Groundpoint [m]")
         ax.set_zlabel("MEAN Z Coorinates of Groundpoint [m]")
 
+
         # tri surface
         fig = plt.figure()
         ax = fig.gca(projection='3d')
@@ -480,9 +494,13 @@ if __name__ == "__main__":
         ax.set_title("Trisurface ")
 
         # imshow
-        fig, ax = plt.subplots(111)
-        ax.imshow(raster_50_50_arr)
-        ax.set_title("Raster 5,5 X 0,5 [m]")
+        plt.figure()
+        plt.imshow(raster_50_50_arr)
+        plt.title("Raster 5,5 X 0,5 [m]")
+
+        plt.figure()
+        plt.imshow(resample_50_50)
+        plt.title("ResAMPLE Raster 5,5 X 0,5 [m]")
 
         plt.show()
 
