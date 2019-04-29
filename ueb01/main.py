@@ -392,8 +392,9 @@ if __name__ == "__main__":
 
                 # if the laser scanner switches to start recording create a new list where the groundpoints will get stored
                 if start_recording and stop_recording:
-                    print("Start Recording - line %d" % cou_line)
+
                     cou_line += 1
+                    print("Start Recording - line %d" % cou_line)
                     raster_line = []
 
                 stop_recording = False          # turn of the not recording flag
@@ -412,12 +413,18 @@ if __name__ == "__main__":
 
                 stop_recording = True
                 pass
+        # get the numbers of obersvations for each laser scanner line
+        max_col_list = [len(raster_50_50_dict[laser_scanner_data]) for laser_scanner_data in raster_50_50_dict]
 
-        raster_50_50_arr = numpy.array([cou_line])
+        # create a raster for the laserscanner data
+        raster_50_50_arr = numpy.zeros((cou_line, max(max_col_list)))
 
-        for i in raster_50_50_dict:
-            print(len(raster_50_50_dict[i]))
+        for row in raster_50_50_dict:
+            print("row: ", row)
+            for col in range(0,len(raster_50_50_dict[row]),1):
+                raster_50_50_arr[int(row)-1, col] = raster_50_50_dict[row][col]
 
+        print("Max cols: ", max(max_col_list))
         print("Raster_50_50 shape: ", raster_50_50_arr.shape)
 
 
@@ -454,7 +461,7 @@ if __name__ == "__main__":
         ax.set_title("3D Surface Plot")
 
 
-        # 3d Scarrer plot
+        # 3d Scattrer plot
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         ax.plot3D(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list, 'gray')
@@ -471,6 +478,11 @@ if __name__ == "__main__":
         ax.plot_trisurf(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list,
                         cmap='viridis', edgecolor='none')
         ax.set_title("Trisurface ")
+
+        # imshow
+        fig, ax = plt.subplots(111)
+        ax.imshow(raster_50_50_arr)
+        ax.set_title("Raster 5,5 X 0,5 [m]")
 
         plt.show()
 
