@@ -394,6 +394,12 @@ if __name__ == "__main__":
                 scanner_point_measurement_x_list.append(tachy_pos_epoch.x)
                 scanner_point_measurement_y_list.append(tachy_pos_epoch.y)
 
+                for groundpoint in sub_list_scanner_epochs:
+                    scanner_ground_point_full_x_list.append(tachy_pos_epoch.x)
+                    scanner_ground_point_full_y_list.append(tachy_pos_epoch.y)
+                    scanner_ground_point_full_z_list.append(groundpoint.z_1ha(tachy_pos_epoch))
+
+
                 # if the laser scanner switches to start recording create a new list where the groundpoints will get stored
                 if start_recording and stop_recording:
 
@@ -486,12 +492,30 @@ if __name__ == "__main__":
         ax.set_zlabel("MEAN Z Coorinates of Groundpoint [m]")
 
 
+        # 3d Scattrer plot - FULL resolution
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+
+        ax.scatter3D(scanner_ground_point_full_x_list, scanner_ground_point_full_y_list, scanner_ground_point_full_z_list,
+                     c=scanner_ground_point_full_z_list, cmap='jet', linewidths=0.5,)
+        ax.set_title("Scatter plot - Full Resolution")
+        ax.set_xlabel("X Coorinates of Groundpoint [m]")
+        ax.set_ylabel("Y Coorinates of Groundpoint [m]")
+        ax.set_zlabel("MEAN Z Coorinates of Groundpoint [m]")
+
         # tri surface
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         ax.plot_trisurf(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list,
                         cmap='viridis', edgecolor='none')
         ax.set_title("Trisurface ")
+
+        # tri surface
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.plot_trisurf(scanner_ground_point_full_x_list, scanner_ground_point_full_y_list, scanner_ground_point_full_z_list,
+                        cmap='viridis', edgecolor='none')
+        ax.set_title("Trisurface - Full Resolution")
 
         # imshow
         plt.figure()
