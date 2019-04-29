@@ -35,9 +35,7 @@ class Epoch:
             #print("  type: ", type(time))
             self.__time = time              # has to be of type datetime
             self.__verbose = verbose_input  # bool True or False - takes influence if info is screened during instantiation or deleting process
-            self.__x_tachy = -51.28
-            self.__y_tachy = -4.373
-            self.__z_tachy = 1.34
+
 
             # if verbose is set True the instantiation information will be printed to screen
             if self.__verbose:
@@ -70,30 +68,6 @@ class Epoch:
     @verbose.setter
     def verbose(self, bool_val):
         self.__verbose = bool_val
-
-    @property
-    def x_tachy(self):
-        return self.__x_tachy
-
-    @x_tachy.setter
-    def x_tachy(self, value):
-        self.__x_tachy = value
-
-    @property
-    def y_tachy(self):
-        return self.__y_tachy
-
-    @y_tachy.setter
-    def y_tachy(self, value):
-        self.__y_tachy = value
-
-    @property
-    def z_tachy(self):
-        return self.__z_tachy
-
-    @z_tachy.setter
-    def z_tachy(self, value):
-        self.__z_tachy = value
 
 
 class PositionEpoch(Epoch):
@@ -179,7 +153,6 @@ class PolarEpoch(Epoch):
                 self.__distance = distance
                 self.__zenith = zenith
                 self.__azimuth = azimuth
-                self.__tachymeter_epoch = None
 
                 if self.verbose:
                     print("  distance={} zenith={} azimuth={}".format(self.__distance, self.__zenith, self.__azimuth))
@@ -193,12 +166,9 @@ class PolarEpoch(Epoch):
 
     # string representation of the instance if you print the class to the screen
     def __str__(self):
-        if self.__tachymeter_epoch:
-            return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n   Tachymeter Instance {}: "\
-                .format(self.time, self.__distance, self.__zenith, self.__azimuth, self.__tachymeter_epoch.time)
-        else:
-            return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n" \
+        return "PolarEpoch Instance {}\n   distance={} zenith={} azimuth={}\n" \
                 .format(self.time, self.__distance, self.__zenith, self.__azimuth)
+
     def __del__(self):
 
         # if verbose in the base class is true - a message will be printed out when the instance DIES
@@ -251,32 +221,39 @@ class PolarEpoch(Epoch):
         if isinstance(tachy_epoch, PolarEpoch):
             self.__tachymeter_epoch = tachy_epoch
         else:
-            raise ValueError("!! ERROR - handed instance is not of type Polar Epoch\n   input: {} is of type {}".format(tachy_epoch, type(tachy_epoch)))
+            raise TypeError("!! ERROR - handed instance is not of type PolarEpoch\n   input: {} is of type {}".format(tachy_epoch, type(tachy_epoch)))
 
     # getter methods to calculate the x, y, z coordinates of the polar epoch - as property
-    @property
-    def x(self):
+    def x_1ha(self, origin):
         """
-        Calculates the X Part of the "Erste Hauptaufgabe" from the tachymeterposition to the droneposition and returns it
-        :return: float
-        """
-        return self.x_tachy + self.__distance * numpy.sin(self.__zenith) * numpy.cos(self.__azimuth)
+        Calculates the X Part of the "Erste Hauptaufgabe" from the origin to the  other position and returns it
 
-    @property
-    def y(self):
-        """
-        Calculates the Y Part of the "Erste Hauptaufgabe" from the tachymeterposition to the droneposition and returns it
         :return: float
         """
-        return self.y_tachy + self.__distance * numpy.sin(self.__zenith) * numpy.sin(self.__azimuth)
+        if isinstance(origin, PositionEpoch):
+            return origin.x + self.__distance * numpy.sin(self.__zenith) * numpy.cos(self.__azimuth)
+        else:
+            raise TypeError("!! ERROR - handed instance is not of type PositionEpoch\n   input: {} is of type {}".format(origin, type(origin)))
 
-    @property
-    def z(self):
+    def y_1ha(self, origin):
         """
-        Calculates the Z Part of the "Erste Hauptaufgabe" from the tachymeterposition to the droneposition and returns it
+        Calculates the Y Part of the "Erste Hauptaufgabe" from the origin to the  other position and returns it
         :return: float
         """
-        return self.z_tachy + self.__distance * numpy.cos(self.__zenith)
+        if isinstance(origin, PositionEpoch):
+            return origin.y + self.__distance * numpy.sin(self.__zenith) * numpy.sin(self.__azimuth)
+        else:
+            raise TypeError("!! ERROR - handed instance is not of type PositionEpoch\n   input: {} is of type {}".format(origin, type(origin)))
+
+    def z_1ha(self, origin):
+        """
+        Calculates the Z Part of the "Erste Hauptaufgabe" from the origin to the  other position and returns it
+        :return: float
+        """
+        if isinstance(origin, PositionEpoch):
+            return origin.z + self.__distance * numpy.cos(self.__zenith)
+        else:
+            raise TypeError("!! ERROR - handed instance is not of type PositionEpoch\n   input: {} is of type {}".format(origin, type(origin)))
 
 
 class Timer():
@@ -384,57 +361,116 @@ if __name__ == "__main__":
         # you also could do bubble_sort(tachy_polar_epochs_list) but its not that easy to read if the return value is missing
         tachy_polar_epochs_list = bubble_sort(tachy_polar_epochs_list)
 
-        print("tach 1 object", tachy_polar_epochs_list[0].x)
+        # calculating drone position relative to the tachymeter position by using
+        drone_traj_position_list = [PositionEpoch(polarep.time, polarep.x_1ha(tachymeter_position), polarep.y_1ha(tachymeter_position), polarep.z_1ha(tachymeter_position)) for polarep in tachy_polar_epochs_list]
 
-        drone_traj_position_list = [PositionEpoch(polarepoch.time, polarepoch.x, polarepoch.y, polarepoch.z) for polarepoch in tachy_polar_epochs_list]
-
-        print("  len of position_list: ", len(drone_traj_position_list))
-        print("   First PolarEpoch: ", tachy_polar_epochs_list[6])
-        print("   First PositionEpoch: ", drone_traj_position_list[6])
+        print("len of position_list: ", len(drone_traj_position_list))
 
         scanner_point_measurement_x_list = []
         scanner_point_measurement_y_list = []
         scanner_point_measurement_z_list = []
-        for tachy_epoch in tachy_polar_epochs_list:
+        print("Matching Epochs ...")
+
+        raster_50_50_dict = {}                # initializing the 5,45x0,50 raster where to store the laserscanner values from each drone-trajectory-line
+        start_recording = False         # initial values for laserscanner, at the beginning it does not record groundpoints
+        stop_recording = True           # intial values for laserscanner , at the beginning it does not record groundpoints
+        cou_line = 0
+
+        for tachy_pos_epoch in drone_traj_position_list:
 
             # filter all epochs of the scanner that are recorded at the same time like the tachy_epoch
-            sub_list_scanner_epochs = list(filter(lambda scanner_epoch: scanner_epoch.time == tachy_epoch.time, scanner_polar_epochs_list))
+            sub_list_scanner_epochs = list(filter(lambda scanner_epoch: scanner_epoch.time == tachy_pos_epoch.time, scanner_polar_epochs_list))
 
+            # build mean of measurements
             if len(sub_list_scanner_epochs) > 0:
-                print("check_epoch: ", tachy_epoch, "\nsub_list len: ",len(sub_list_scanner_epochs))
-                scanner_point_measurement_z_list.append(numpy.nanmean(numpy.array([item.z for item in sub_list_scanner_epochs])))
-                scanner_point_measurement_x_list.append(numpy.nanmean(numpy.array([item.x for item in sub_list_scanner_epochs])))
-                scanner_point_measurement_y_list.append(numpy.nanmean(numpy.array([item.y for item in sub_list_scanner_epochs])))
+                start_recording = True      # turn on the recording flag
+
+                z_value = numpy.nanmean(numpy.array([item.z_1ha(tachy_pos_epoch) for item in sub_list_scanner_epochs]))
+                scanner_point_measurement_z_list.append(z_value)
+                scanner_point_measurement_x_list.append(tachy_pos_epoch.x)
+                scanner_point_measurement_y_list.append(tachy_pos_epoch.y)
+
+                # if the laser scanner switches to start recording create a new list where the groundpoints will get stored
+                if start_recording and stop_recording:
+                    print("Start Recording - line %d" % cou_line)
+                    cou_line += 1
+                    raster_line = []
+
+                stop_recording = False          # turn of the not recording flag
+                raster_line.append(z_value)
 
 
-                #for scanner_epoch in sub_list_scanner_epochs:
-                #    print("scanner_x: ", scanner_epoch.x, " - drone x:   ", tachy_epoch.x)
+            else:   # if laserscanner is not measureing set the flags to not recording mode
 
+                start_recording = False
 
-            else:
+                # when recording stops - write out collected data to raster_50_50_dict
+                if start_recording == False and stop_recording == False:
+                    print("Stop Recording - line %d" % cou_line)
+                    for z_val in raster_line:
+                        raster_50_50_dict[str(cou_line)] = raster_line
+
+                stop_recording = True
                 pass
 
+        raster_50_50_arr = numpy.array([cou_line])
+
+        for i in raster_50_50_dict:
+            print(len(raster_50_50_dict[i]))
+
+        print("Raster_50_50 shape: ", raster_50_50_arr.shape)
+
+
+        # Trajectory
         plt.figure()
-        plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list])
+        plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list], label="raw trajectory")
+        plt.plot(drone_traj_position_list[0].x, drone_traj_position_list[0].y, label="start point", marker='^', markerfacecolor='red', markersize=6, linewidth=3)
+        plt.plot(drone_traj_position_list[-1].x, drone_traj_position_list[-1].y, label="end point", marker='^', markerfacecolor='red', markersize=6, linewidth=3)
+        plt.plot(scanner_point_measurement_x_list, scanner_point_measurement_y_list, label="trajectory where points get collected")
+        plt.legend()
+        plt.xlabel("X Coordinates [m]")
+        plt.ylabel("Y Coordinates [m]")
+        plt.title("2D Drone Trajectory")
 
 
+        # 3d Surface plot
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         X, Y = numpy.meshgrid(scanner_point_measurement_x_list, scanner_point_measurement_y_list)
-        print("X type: {}\n\X len: {} \n{}".format(type(X), len(X), X))
+        print("X type: {}\n\X len: {} \nshape {}".format(type(X), len(X), X.shape))
 
         Z = numpy.array(scanner_point_measurement_z_list).reshape(1, len(scanner_point_measurement_z_list))
-        print("Z type: {}\n\Z len: {} \n{}".format(type(Z), len(Z), Z))
+        print("Z type: {}\n\Z len: {} \nshape {}".format(type(Z), len(Z), Z.shape))
         # Plot the surface.
         surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
                                linewidth=0, antialiased=False)
         # Customize the z axis.
-        ax.set_zlim(-1.01, 1.01)
+        ax.set_zlim(numpy.nanmin(Z), numpy.nanmax(Z))
         ax.zaxis.set_major_locator(LinearLocator(10))
         ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
         # Add a color bar which maps values to colors.
         fig.colorbar(surf, shrink=0.5, aspect=5)
+        ax.set_title("3D Surface Plot")
+
+
+        # 3d Scarrer plot
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.plot3D(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list, 'gray')
+        ax.scatter3D(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list,
+                     c=scanner_point_measurement_z_list, cmap='jet', linewidths=0.5,)
+        ax.set_title("Scatter plot")
+        ax.set_xlabel("X Coorinates of Groundpoint [m]")
+        ax.set_ylabel("Y Coorinates of Groundpoint [m]")
+        ax.set_zlabel("MEAN Z Coorinates of Groundpoint [m]")
+
+        # tri surface
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.plot_trisurf(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list,
+                        cmap='viridis', edgecolor='none')
+        ax.set_title("Trisurface ")
 
         plt.show()
 
