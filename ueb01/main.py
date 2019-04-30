@@ -526,6 +526,6 @@ if __name__ == "__main__":
         plt.imshow(resample_50_50)
         plt.title("ResAMPLE Raster 5,5 X 0,5 [m]")
 
-        plt.show()
+        #plt.show()
 
         print("Programm ENDE")
