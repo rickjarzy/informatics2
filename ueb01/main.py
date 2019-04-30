@@ -445,7 +445,11 @@ if __name__ == "__main__":
 
         print("Max cols: ", max(max_col_list))
         print("Raster_50_50 shape: ", raster_50_50_arr.shape)
-        resample_50_50 = scipy.ndimage.zoom(raster_50_50_arr, 2, order=3)
+
+
+        # resample raster to 50x50
+
+
 
         # Trajectory
         plt.figure()
@@ -522,9 +526,7 @@ if __name__ == "__main__":
         plt.imshow(raster_50_50_arr)
         plt.title("Raster 5,5 X 0,5 [m]")
 
-        plt.figure()
-        plt.imshow(resample_50_50)
-        plt.title("ResAMPLE Raster 5,5 X 0,5 [m]")
+
 
         #plt.show()
 
