@@ -366,10 +366,12 @@ if __name__ == "__main__":
 
         print("len of position_list: ", len(drone_traj_position_list))
 
+        # initialize lists where data will be stored with z value as a mean
         scanner_point_measurement_x_list = []
         scanner_point_measurement_y_list = []
         scanner_point_measurement_z_list = []
 
+        # initialize lists where data will be stored with z values in full resolution
         scanner_ground_point_full_x_list = []
         scanner_ground_point_full_y_list = []
         scanner_ground_point_full_z_list = []
