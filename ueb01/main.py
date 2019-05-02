@@ -7,10 +7,13 @@ import datetime
 import numpy
 import time
 import scipy.ndimage
+from scipy.interpolate import interp1d
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
+
 # =====================================================================================
 # Class Definitions
 # =====================================================================================
@@ -175,9 +178,6 @@ class PolarEpoch(Epoch):
         if self.verbose:
             print("- Delete PolarEpoch Instance {}\n  distance={} zenith={} azimuth={}".format(self.time, self.__distance, self.__zenith, self.__azimuth))
 
-    def __eq__(self, other):
-
-        pass
 
     # PROPERTIES
     # ---------------------------
@@ -317,9 +317,9 @@ def read_obs_data(input_file_path, input_start_epoch, verbose=False):
 
 def bubble_sort(input_list):
     """
-
+    bubble sort algorithm sorts the input_lost from max to min value and returns a sorted list
     :param input_list:
-    :return:
+    :return: sorted list - no copy of input list
     """
 
     number_of_elements = len(input_list)
@@ -331,8 +331,6 @@ def bubble_sort(input_list):
 
     return input_list
 
-def create_datetime_object(input_time):
-    pass
 
 # =====================================================================================
 # Main Programm
@@ -349,7 +347,7 @@ if __name__ == "__main__":
 
         tachymeter_position = PositionEpoch(start_epoch_datetime_object, -51.280, -4.373, 1.340, True)
 
-        print("Start Import")
+        print("Start Import ...")
 
         # read out laser scanner data - add third function parameter verbose=True to see if class objects get deleted
         scanner_polar_epochs_list = read_obs_data("obsDrone.txt", start_epoch_datetime_object)
@@ -364,7 +362,7 @@ if __name__ == "__main__":
         # calculating drone position relative to the tachymeter position by using
         drone_traj_position_list = [PositionEpoch(polarep.time, polarep.x_1ha(tachymeter_position), polarep.y_1ha(tachymeter_position), polarep.z_1ha(tachymeter_position)) for polarep in tachy_polar_epochs_list]
 
-        print("len of position_list: ", len(drone_traj_position_list))
+
 
         # initialize lists where data will be stored with z value as a mean
         scanner_point_measurement_x_list = []
@@ -375,7 +373,7 @@ if __name__ == "__main__":
         scanner_ground_point_full_x_list = []
         scanner_ground_point_full_y_list = []
         scanner_ground_point_full_z_list = []
-        print("Matching Epochs ...")
+        print("Matching Epochs Drone <--> Laserscanner ...")
 
         raster_50_50_dict = {}                # initializing the 5,45x0,50 raster where to store the laserscanner values from each drone-trajectory-line
         start_recording = False         # initial values for laserscanner, at the beginning it does not record groundpoints
@@ -396,22 +394,21 @@ if __name__ == "__main__":
                 scanner_point_measurement_x_list.append(tachy_pos_epoch.x)
                 scanner_point_measurement_y_list.append(tachy_pos_epoch.y)
 
+                # attach all measurements to a list and build NO MEAN
                 for groundpoint in sub_list_scanner_epochs:
                     scanner_ground_point_full_x_list.append(tachy_pos_epoch.x)
                     scanner_ground_point_full_y_list.append(tachy_pos_epoch.y)
                     scanner_ground_point_full_z_list.append(groundpoint.z_1ha(tachy_pos_epoch))
 
-
                 # if the laser scanner switches to start recording create a new list where the groundpoints will get stored
                 if start_recording and stop_recording:
 
                     cou_line += 1
-                    print("Start Recording - line %d" % cou_line)
                     raster_line = []
+                    print("Start comparing Epochs in Trajectory Scanline %d ..." % cou_line)
 
                 stop_recording = False          # turn of the not recording flag
                 raster_line.append(z_value)
-
 
             else:   # if laserscanner is not measureing set the flags to not recording mode
 
@@ -419,7 +416,6 @@ if __name__ == "__main__":
 
                 # when recording stops - write out collected data to raster_50_50_dict
                 if start_recording == False and stop_recording == False:
-                    print("Stop Recording - line %d" % cou_line)
 
                     # every second line hast to be reversed because of the drones heading changing for 180 degree
                     if (cou_line % 2 == 0):
@@ -433,69 +429,85 @@ if __name__ == "__main__":
                 stop_recording = True
                 pass
 
-
         # get the numbers of obersvations for each laser scanner line
         max_col_list = [len(raster_50_50_dict[laser_scanner_data]) for laser_scanner_data in raster_50_50_dict]
 
-        # create a raster for the laserscanner data
-        raster_50_50_arr = numpy.zeros((cou_line, max(max_col_list)))
+        # create a raster for the laserscanner data which will be used as an image representation
+        raster_550_50_arr = numpy.zeros((cou_line, max(max_col_list)))
 
+        # iter throuh the created dict with the laser scanner lines
         for row in raster_50_50_dict:
+            #write each single value from the list in the dict onto the numpy data matrix
+            for col in range(0, len(raster_50_50_dict[row]), 1):
+                raster_550_50_arr[int(row) - 1, col] = raster_50_50_dict[row][col]
 
-            for col in range(0,len(raster_50_50_dict[row]),1):
-                raster_50_50_arr[int(row)-1, col] = raster_50_50_dict[row][col]
+        # create the raster matrixes for the interpolated image
+        raster_50_50_interpolated_linear = numpy.zeros((132, max(max_col_list)))          # 132 is the distance between the last laserscanner point in the last line and the first in the new recorded line
+        raster_50_50_interpolated_cubic = numpy.zeros((132, max(max_col_list)))
+        print("Start Resampling raster to 0.5 x 0.5 [m] ")
 
-        print("Max cols: ", max(max_col_list))
-        print("Raster_50_50 shape: ", raster_50_50_arr.shape)
+        # iter trough all cols of the raster and interpolate to a resolution of 0.5x0.5 meters
+        for col in range(0, max(max_col_list), 1):
+            # interpolate between drone - laser scanner lines
+
+            x_data = numpy.linspace(0,cou_line, num=cou_line, endpoint=True)
+            y_data = raster_550_50_arr[:, col]
+
+            linear_interpolation_function = interp1d(x_data, y_data)    # linear interpolation between two laserscanner row points
+            cubic_interpolation_function = interp1d(x_data, y_data, kind='cubic')
+            x_data_05_05 = numpy.linspace(0,cou_line, num=132, endpoint=True)
+
+            raster_50_50_interpolated_linear[:, col] = linear_interpolation_function(x_data_05_05)
+            raster_50_50_interpolated_cubic[:, col] = cubic_interpolation_function(x_data_05_05)
+
+            #
+            # Uncomment if you want to search through the interpolated data ... can take long to finish, depending on the col-number
+            #
+
+            #plt.figure()
+            #plt.title("Interpolation Methods for Raster Resampling")
+            #plt.plot(x_data, y_data, 'o', x_data_05_05, linear_interpolation_function(x_data_05_05), '-', x_data_05_05, cubic_interpolation_function(x_data_05_05), '--')
+            #plt.legend(['laser scanner data', 'linear interpol', 'cubic spline interp'], loc='best')
+            #plt.show()
 
 
-        # resample raster to 50x50
+        mean_raster = (raster_50_50_interpolated_linear + raster_50_50_interpolated_cubic) / 2
+
+        # write all x,y and z coordinates of the full drone trajectory onto a lost
+        full_drone_pos_x_list = [drone_pos.x for drone_pos in drone_traj_position_list]
+        full_drone_pos_y_list = [drone_pos.y for drone_pos in drone_traj_position_list]
+        full_drone_pos_z_list = [drone_pos.z for drone_pos in drone_traj_position_list]
 
 
+        # ================================================================
+        # PLOTS
+        # ================================================================
+        print("Start Plotting ...")
 
         # Trajectory
         plt.figure()
-        plt.plot([drone_pos.x for drone_pos in drone_traj_position_list], [drone_pos.y for drone_pos in drone_traj_position_list], label="raw trajectory")
+        plt.plot(full_drone_pos_x_list, full_drone_pos_y_list, label="full trajectory")
         plt.plot(drone_traj_position_list[0].x, drone_traj_position_list[0].y, label="start point", marker='^', markerfacecolor='red', markersize=6, linewidth=3)
         plt.plot(drone_traj_position_list[-1].x, drone_traj_position_list[-1].y, label="end point", marker='^', markerfacecolor='red', markersize=6, linewidth=3)
-        plt.plot(scanner_point_measurement_x_list, scanner_point_measurement_y_list, label="trajectory where points get collected")
+        plt.plot(scanner_point_measurement_x_list, scanner_point_measurement_y_list, label="trajectory where ground points get measured")
         plt.legend()
         plt.xlabel("X Coordinates [m]")
         plt.ylabel("Y Coordinates [m]")
         plt.title("2D Drone Trajectory")
 
-
-        # 3d Surface plot
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        X, Y = numpy.meshgrid(scanner_point_measurement_x_list, scanner_point_measurement_y_list)
-        print("X type: {}\n\X len: {} \nshape {}".format(type(X), len(X), X.shape))
-
-        Z = numpy.array(scanner_point_measurement_z_list).reshape(1, len(scanner_point_measurement_z_list))
-        print("Z type: {}\n\Z len: {} \nshape {}".format(type(Z), len(Z), Z.shape))
-        # Plot the surface.
-        surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
-                               linewidth=0, antialiased=False)
-        # Customize the z axis.
-        ax.set_zlim(numpy.nanmin(Z), numpy.nanmax(Z))
-        ax.zaxis.set_major_locator(LinearLocator(10))
-        ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-
-        # Add a color bar which maps values to colors.
-        fig.colorbar(surf, shrink=0.5, aspect=5)
-        ax.set_title("3D Surface Plot")
-
-
         # 3d Scattrer plot
         fig = plt.figure()
         ax = fig.gca(projection='3d')
-        ax.plot3D(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list, 'gray')
+        ax.plot3D(full_drone_pos_x_list, full_drone_pos_y_list, full_drone_pos_z_list, 'gray', label="drone trajectory with vertikal info")
+
         ax.scatter3D(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list,
-                     c=scanner_point_measurement_z_list, cmap='jet', linewidths=0.5,)
-        ax.set_title("Scatter plot")
+                     c=scanner_point_measurement_z_list, cmap='jet', linewidths=0.5, label="laser scanner ground points")
+
+        ax.set_title("3D Scatter Plot of the Drone Trajectory and the Laser Scanner Data")
         ax.set_xlabel("X Coorinates of Groundpoint [m]")
         ax.set_ylabel("Y Coorinates of Groundpoint [m]")
         ax.set_zlabel("MEAN Z Coorinates of Groundpoint [m]")
+        ax.legend()
 
 
         # 3d Scattrer plot - FULL resolution
@@ -503,33 +515,64 @@ if __name__ == "__main__":
         ax = fig.gca(projection='3d')
 
         ax.scatter3D(scanner_ground_point_full_x_list, scanner_ground_point_full_y_list, scanner_ground_point_full_z_list,
-                     c=scanner_ground_point_full_z_list, cmap='jet', linewidths=0.5,)
-        ax.set_title("Scatter plot - Full Resolution")
+                     c=scanner_ground_point_full_z_list, cmap='jet', linewidths=0.5, label="laser scanner ground points - not aggregated")
+
+        ax.set_title("3D Scatter Plot of the Drone Trajectory and the Laser Scanner Data")
         ax.set_xlabel("X Coorinates of Groundpoint [m]")
         ax.set_ylabel("Y Coorinates of Groundpoint [m]")
-        ax.set_zlabel("MEAN Z Coorinates of Groundpoint [m]")
+        ax.set_zlabel("Z Coorinates of Groundpoint [m]")
+        ax.legend()
 
         # tri surface
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         ax.plot_trisurf(scanner_point_measurement_x_list, scanner_point_measurement_y_list, scanner_point_measurement_z_list,
-                        cmap='viridis', edgecolor='none')
-        ax.set_title("Trisurface ")
+                        cmap='viridis', edgecolor='none', label="3D geometry ")
+        ax.set_title("Trisurface Representation of the Laser Scanner Data - Mean Resolution")
+        ax.set_xlabel("X Coorinates of Groundpoint [m]")
+        ax.set_ylabel("Y Coorinates of Groundpoint [m]")
+        ax.set_zlabel("Z Coorinates of Groundpoint [m]")
+
 
         # tri surface
         fig = plt.figure()
         ax = fig.gca(projection='3d')
         ax.plot_trisurf(scanner_ground_point_full_x_list, scanner_ground_point_full_y_list, scanner_ground_point_full_z_list,
                         cmap='viridis', edgecolor='none')
-        ax.set_title("Trisurface - Full Resolution")
+        ax.set_title("Trisurface Representation of the Laser Scanner Data - Full Resolution")
+        ax.set_xlabel("X Coorinates of Groundpoint [m]")
+        ax.set_ylabel("Y Coorinates of Groundpoint [m]")
+        ax.set_zlabel("Z Coorinates of Groundpoint [m]")
 
         # imshow
         plt.figure()
-        plt.imshow(raster_50_50_arr)
-        plt.title("Raster 5,5 X 0,5 [m]")
+        plt.imshow(raster_550_50_arr)
+        plt.title("Rasterrepresentation of the Laser Scanner Data\n 5,5 X 0,5 [m] - raw ")
+        plt.xlabel("X Coordinates [m]")
+        plt.ylabel("Y Coordinates [m]")
+        plt.colorbar()
 
+        plt.figure()
+        plt.imshow(raster_50_50_interpolated_linear)
+        plt.title("Rasterrepresentation of the Laser Scanner Data\n 0,5 X 0,5 [m] - linear interpolation")
+        plt.xlabel("X Coordinates [m]")
+        plt.ylabel("Y Coordinates [m]")
+        plt.colorbar()
 
+        plt.figure()
+        plt.imshow(raster_50_50_interpolated_cubic)
+        plt.title("Rasterrepresentation of the Laser Scanner Data\n 0,5 X 0,5 [m] - cubic spline interpolation")
+        plt.xlabel("X Coordinates [m]")
+        plt.ylabel("Y Coordinates [m]")
+        plt.colorbar()
 
-        #plt.show()
+        plt.figure()
+        plt.imshow(raster_50_50_interpolated_cubic)
+        plt.title("Rasterrepresentation of the Laser Scanner Data\n 0,5 X 0,5 [m] - mean of linear and cubic spline interpolation")
+        plt.xlabel("X Coordinates [m]")
+        plt.ylabel("Y Coordinates [m]")
+        plt.colorbar()
+
+        plt.show()
 
         print("Programm ENDE")
