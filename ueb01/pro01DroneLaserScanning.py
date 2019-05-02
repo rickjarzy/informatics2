@@ -61,7 +61,13 @@ class Epoch:
 
     @time.setter
     def time(self, time):
-        self.__time = time
+
+        if isinstance(time, datetime.datetime):
+            self.__time = time              # has to be of type datetime
+
+        else:
+            raise ValueError("!! The input time is not of type datetime.datetime !!")
+
 
     # property getter method to access verbose in the classes that inherrit from Epoch
     @property
@@ -120,14 +126,22 @@ class PositionEpoch(Epoch):
         return self.__x
     @x.setter
     def x(self, value):
-        self.__x = value
+
+        if isinstance(value, float):
+            self.__x = value
+        else:
+            raise ValueError("!! ERROR - the input is not of type float")
 
     @property
     def y(self):
         return self.__y
     @y.setter
     def y(self, value):
-        self.__y = value
+
+        if isinstance(value, float):
+            self.__y = value
+        else:
+            raise ValueError("!! ERROR - the input is not of type float")
 
     @property
     def z(self):
@@ -135,7 +149,10 @@ class PositionEpoch(Epoch):
 
     @z.setter
     def z(self, value):
-        self.__z = value
+        if isinstance(value, float):
+            self.__z = value
+        else:
+            raise ValueError("!! ERROR - the input is not of type float")
 
 
 class PolarEpoch(Epoch):
@@ -188,7 +205,11 @@ class PolarEpoch(Epoch):
 
     @distance.setter
     def distance(self, value):
-        self.__distance = value
+        if isinstance(value, float):
+            self.__distance = value
+        else:
+            raise ValueError("!! ERROR - the input is not of type float")
+
 
     @property
     def zenith(self):
@@ -196,7 +217,11 @@ class PolarEpoch(Epoch):
 
     @zenith.setter
     def zenith(self, value):
-        self.__zenith = value
+        if isinstance(value, float):
+            self.__zenith = value
+        else:
+            raise ValueError("!! ERROR - the input is not of type float")
+
 
     @property
     def azimuth(self):
@@ -204,24 +229,11 @@ class PolarEpoch(Epoch):
 
     @azimuth.setter
     def azimuth(self, value):
-        self.__azimuth = value
-
-    @property
-    def tachymeter_epoch(self):
-        return self.__tachymeter_epoch
-
-    @tachymeter_epoch.setter
-    def tachymeter_epoch(self, tachy_epoch):
-        """
-        sets the corresponding tachymeter epoch to the laser scanner epoch
-        :param value: PolarEpoch instance
-        :return: none
-        """
-        print("   Assign Tachymeter Epoch to Scanner Epoch")
-        if isinstance(tachy_epoch, PolarEpoch):
-            self.__tachymeter_epoch = tachy_epoch
+        if isinstance(value, float):
+            self.__azimuth = value
         else:
-            raise TypeError("!! ERROR - handed instance is not of type PolarEpoch\n   input: {} is of type {}".format(tachy_epoch, type(tachy_epoch)))
+            raise ValueError("!! ERROR - the input is not of type float")
+
 
     # getter methods to calculate the x, y, z coordinates of the polar epoch - as property
     def x_1ha(self, origin):
