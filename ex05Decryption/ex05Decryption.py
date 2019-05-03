@@ -2,6 +2,7 @@
 # 00311430
 # Informatics 2 - SS19
 # Gruppe A
+# main programm
 
 import numpy
 import matplotlib.pyplot as plt

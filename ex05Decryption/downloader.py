@@ -1,3 +1,9 @@
+# Paul Arzberger
+# 00311430
+# Informatics 2 - SS19
+# Gruppe A
+# module downloader
+
 import os
 import shutil
 import ftplib
@@ -58,7 +64,7 @@ def decompress(filename):
     it will be downloaded from the TU GRAZ FTP Server. Returns the handed filename as string without the '.gz' extension or None
 
     :param filename: string - should have '.gz' ending
-    :return: string - filename with out extension of '.gz' OR None
+    :return: string - filename with out extension of '.gz' OR an Exception
     """
     print("\n# start decompression of file: %s \n#############################################" % filename)
 
@@ -89,5 +95,5 @@ def decompress(filename):
         return filename_txt
     # if the handed filename has no '.gz' extension throw an Exception
     else:
+
         raise Exception("# not a gzip file")
-        return None
