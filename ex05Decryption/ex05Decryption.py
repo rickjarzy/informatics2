@@ -40,8 +40,7 @@ if __name__ == "__main__":
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
     ax.imshow(matrix_E, cmap='gray')
-    ax.set_title("""#include <stdio.h>\nint main(){\n    printf("Hello World\\n");\n    return 0;\n    }""", loc='left') # ;)
-    ax.set_title("ex05Decryption")
+    ax.set_title("""#include <stdio.h> int main(){ printf("Hello World!"); return 0; }\nex05Decryption""") # ;)
     plt.show()
 
     print("Programm ENDE")

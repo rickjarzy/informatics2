@@ -585,6 +585,6 @@ if __name__ == "__main__":
         plt.ylabel("Y Coordinates [m]")
         plt.colorbar()
 
-        plt.show()
+        #plt.show()
 
         print("Programm ENDE")
