@@ -408,8 +408,8 @@ if __name__ == "__main__":
 
                 # attach all measurements to a list and build NO MEAN
                 for groundpoint in sub_list_scanner_epochs:
-                    scanner_ground_point_full_x_list.append(tachy_pos_epoch.x)
-                    scanner_ground_point_full_y_list.append(tachy_pos_epoch.y)
+                    scanner_ground_point_full_x_list.append(groundpoint.x_1ha(tachy_pos_epoch))
+                    scanner_ground_point_full_y_list.append(groundpoint.y_1ha(tachy_pos_epoch))
                     scanner_ground_point_full_z_list.append(groundpoint.z_1ha(tachy_pos_epoch))
 
                 # if the laser scanner switches to start recording create a new list where the groundpoints will get stored
@@ -585,6 +585,6 @@ if __name__ == "__main__":
         plt.ylabel("Y Coordinates [m]")
         plt.colorbar()
 
-        #plt.show()
+        plt.show()
 
         print("Programm ENDE")
