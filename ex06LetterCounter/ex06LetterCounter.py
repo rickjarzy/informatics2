@@ -43,20 +43,24 @@ def count_chars(input_string_list, upper_case=False, verbose=False):
         overall_collect_string = ""
         for input_string_element in input_string_list:
 
+            # collect the single words in the input string list to process an overall character count at the end of the if statement
             overall_collect_string = overall_collect_string+input_string_element
 
             print("Word: ", input_string_element)
+            # count characters of a single word of input list
             counted_chars_dict = create_characte_dict(input_string_element, upper_case=upper_case)
 
             # join all the single characters with their frequency , sort them and join a single string
             return_string = "".join(sorted([character+str(counted_chars_dict[character])+" " for character in counted_chars_dict]))
             print(return_string)
 
+        # count and show the entire character frequencies of the input word list
         overall_count_dict = create_characte_dict(overall_collect_string, upper_case=upper_case)
         overall_count_string = "".join(sorted([character+str(overall_count_dict[character])+" " for character in overall_count_dict]))
         print("Overall count\n", overall_count_string)
 
     else:
+        # create the character frequency with out additional screen info
         overall_count_dict = create_characte_dict(input_string_list, upper_case=upper_case)
         overall_count_string = "".join(sorted([character + str(overall_count_dict[character]) + " " for character in overall_count_dict]))
         print(overall_count_string)
