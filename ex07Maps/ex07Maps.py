@@ -9,19 +9,27 @@ if __name__ == "__main__":
     sat_data = numpy.loadtxt(r"data/orbit.txt", skiprows=2)
     blue_mrbl_jpg = plt.imread(r"data/bluemarble01.jpg")
 
-    print(sat_data[:, 1:])
-
     # calc the norm of the vector for each epoch
     r = numpy.linalg.norm(sat_data[:, 1:], axis=1)
 
-    phi = numpy.arcsin(sat_data[:, 3]/r)
-
-    lam = numpy.arctan2(sat_data[:, 2],sat_data[:, 1])
+    phi = numpy.arcsin(sat_data[:, 3] / r) * 180/numpy.pi
+    print(numpy.nanmax(phi))
+    lam = numpy.arctan2(sat_data[:, 2], sat_data[:, 1]) * (180 / numpy.pi)
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, projection=ccrs.Robinson())
     ax.imshow(blue_mrbl_jpg, origin='upper', transform=ccrs.PlateCarree())
-    ax.tissot(facecolor='red', alpha=0.4)
+    ax.plot(lam, phi, color='red', )  # linestyle='None'
+
+
+    #ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+    #ax.imshow(blue_mrbl_jpg, origin='upper', transform=ccrs.Robinson())
+    #ax.plot(lam, phi, color='red', )    #linestyle='None'
+
+
+
+    #
+
     plt.show()
 
     print("Programm ENDE")
