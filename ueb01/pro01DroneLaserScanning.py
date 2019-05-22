@@ -106,8 +106,7 @@ class PositionEpoch(Epoch):
             print("!!ERROR Constructor: \n  one of he inputparameters x: {} - {} - y: {} - {} - z: {} - {} is not useable\n"
                              "  input must be a number or at least typecastable to a number"
                              .format(x, type(x), y, type(y), z, type(z)))
-            # delete instance if input parameters are wrong
-            del self
+
 
     # string representation of the instance
     def __str__(self):
