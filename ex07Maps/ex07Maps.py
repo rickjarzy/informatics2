@@ -19,7 +19,8 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, projection=ccrs.Robinson())
     ax.imshow(blue_mrbl_jpg, origin='upper', transform=ccrs.PlateCarree())
-    ax.plot(lam, phi, color='red', transform=ccrs.PlateCarree())  # linestyle='None'
+    ax.plot(lam, phi, color='red', transform=ccrs.PlateCarree())
+    ax.set_title("Grace orbit on 2008-01-01")
 
 
     #ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
