@@ -34,23 +34,6 @@ def animate_via_function(input_data, input_lon, input_lat):
 
     anim.save("animation_func.mp4")
 
-
-def artist_animation(input_data, input_lon, input_lat):
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, projection=ccrs.Robinson())
-    ax.set_global()
-    frames = []
-
-    for index in numpy.arange(0,input_data.shape[0],1):
-        single_frame = ax.pcolormesh(input_lon, input_lat, input_data[index], cmap='RdBu', vmin=numpy.nanmin(input_data),
-                         vmax=numpy.nanmax(input_data), transform=ccrs.PlateCarree())
-        frames.append((single_frame,))
-
-    anim = animation.ArtistAnimation(fig, frames, interval=500, blit=True )
-    anim.save("animation_artist.mp4")
-
-
-
 gravity_data = numpy.load(r"gravityField.npy")
 
 lon = numpy.arange(-180, 181, 1)
@@ -58,11 +41,7 @@ lat = numpy.arange(90, -91, -1)
 
 
 animate_via_function(gravity_data, lon, lat)
-artist_animation(gravity_data, lon, lat)
 
-
-
-frames = []
 
 
 
