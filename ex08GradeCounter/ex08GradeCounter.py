@@ -112,5 +112,5 @@ if __name__ == "__main__":
                         calcGradeAverage(grade_dict)
 
     except KeyboardInterrupt:
-        print("Good Bye - Stopped Programm via STRG + C")
+        print("\nGood Bye - Stopped Programm via STRG + C")
 
