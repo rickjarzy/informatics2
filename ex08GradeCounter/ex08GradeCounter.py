@@ -3,7 +3,6 @@
 # Informatics 2 - SS19
 # Gruppe A
 
-
 class InvalidGradeError(ValueError):
     """
     class that handles invalide grades with an error message
@@ -23,12 +22,14 @@ def calcGradeAverage(grade_dict):
 
     sum_grade = 0
     sum_frequency = 0
+
     # sort the dict by its keys
-    print(grade_dict.items())
     for grade, frequency in sorted(grade_dict.items()):
         print("Grade: ", grade, " : ", frequency)
+
         sum_grade += grade * frequency
         sum_frequency += frequency
+
     # calc the mean of the grade
     print("Average grade (out of %d): %2.1f" % (sum_frequency, sum_grade / sum_frequency))
 
@@ -78,10 +79,10 @@ if __name__ == "__main__":
 
     # initial grade dict on which all the grades and their frequencies are stored
     grade_dict = {}
+
     try:
         while True:
-
-                print("Please Enter a Grade: ")
+                print("\nPlease Enter a Grade: ")
 
                 # convert input string to list with string elements
                 input_str = input().split()
