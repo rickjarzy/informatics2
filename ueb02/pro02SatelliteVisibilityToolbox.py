@@ -84,9 +84,9 @@ def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, inpu
         print("- content of folder")
         print("- ", ftp_connection.nlst())
 
-        # todo: download the satdata into specific dir on disk
+
         # todo: split date and download blue marble picture for the month of date
-        # todo: write gz function
+        # todo: download blue marble!!
 
         ftp_files_list = ftp_connection.nlst()
         print("- found %d sat orbit files in dir %s" % (len(ftp_files_list), input_date))
