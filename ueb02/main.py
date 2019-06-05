@@ -50,6 +50,8 @@ if __name__ == "__main__":
 
             sat_data = numpy.loadtxt(sat, skiprows=2)
 
+
+            # todo: convert mod jul date to UTC
             jul_date = sat_data[0,0]
             print(jul_date)
 
