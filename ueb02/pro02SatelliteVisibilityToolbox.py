@@ -2,8 +2,36 @@ import ftplib
 import os
 import gzip
 import shutil
+import datetime
 
-def download_file(ftp_connection, sat_orbit_filename):
+class Satellite:
+
+    def __init__(self, time, name, x=0., y=0., z=0., verbose=False):
+
+        if float(x) and float(y) and float(z):
+            self.__x = x
+            self.__z = z
+            self.__y = y
+
+        if isinstance(time, datetime.datetime):
+            self.__time = time
+
+        if isinstance(name, str):
+            self.__name = name
+
+        if isinstance(verbose, bool):
+            self.__verbose = verbose
+        if self.__verbose:
+            print("+ Create new {} Epoch - {}".format(self.__name, self.__time))
+
+    def __str__(self):
+        return "GPS %s - Epoch %s " % (self.__name, self.__time)
+
+    def __del__(self):
+        print("- Delete Instance GPS %s - Epoch %s " % (self.__name, self.__time)) if self.__verbose else False
+
+
+def download_file(ftp_connection, sat_orbit_filename, input_verbosity):
     """
     download a file from a specific ftp location
     :param ftp_connection:      ftp_connection instance
@@ -11,56 +39,12 @@ def download_file(ftp_connection, sat_orbit_filename):
     :return: None
     """
     with open(sat_orbit_filename, "wb") as download_file:
-        print("- start download of %s " % sat_orbit_filename)
+        if input_verbosity: print("- start download of %s " % sat_orbit_filename)
+
         ftp_connection.retrbinary("RETR %s" % sat_orbit_filename, download_file.write)
 
 
-def decompress_file(filename, filename_txt):
-    """
-    decompresses gz file
-    :param filename:     string - gz filename
-    :param filename_txt: string - filename of the extracted txt filen
-    :return: None
-    """
-    # decompress the gz file and extract the txt file
-    with gzip.open(filename, "rb") as decompress_gzfile:
-        with open(filename_txt, "wb") as receiving_file:
-            shutil.copyfileobj(decompress_gzfile, receiving_file)
-
-def extract_txt_from_gz_file(filename, input_overwrite):
-    """
-    decompresses a *.gz file and extracts its txt file content
-    :param filename: string - filename of the gz file
-    :return: None
-    """
-
-    #check if file is a gz file
-    if ".gz" in filename:
-        # check if file has been downloaded
-        if os.path.exists(filename):
-            filename_txt = filename.split(".gz")[0]
-
-            # if the overwrite flag was set decompress the downloaded files again
-            if input_overwrite:
-                decompress_file(filename, filename_txt)
-                print("- decompress %s " % filename)
-
-            else:
-
-                if os.path.exists(filename_txt):
-                    print("- %s allready exists - does not need to be decompressed")
-
-                # decompress the gz file and extract the txt file
-                print("- decompress %s " % filename)
-                decompress_file(filename, filename_txt)
-
-        # if something wents south print an error message
-        else:
-            print("# ERROR %s could not be decompressed" % filename)
-
-
-
-def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, input_overwrite):
+def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, input_overwrite, input_verbosity):
 
 
     """
@@ -74,22 +58,24 @@ def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, inpu
     :return: None
     """
 
-    print("\n- start FTP connection\n-------------------\"\n- date: %s \n- starttime: %s\n- endtime: %s"%(input_date, time_start, time_end))
+    print("\n- start FTP connection\n-----------------------\n- date: %s \n- starttime: %s\n- endtime: %s"%(input_date, time_start, time_end))
 
     # access ftp server
     with ftplib.FTP("ftp.tugraz.at") as ftp_connection:
 
         ftp_connection.login()
         ftp_connection.cwd(input_ftp_dir + input_date)
-        print("- content of folder")
-        print("- ", ftp_connection.nlst())
+
 
 
         # todo: split date and download blue marble picture for the month of date
         # todo: download blue marble!!
 
         ftp_files_list = ftp_connection.nlst()
-        print("- found %d sat orbit files in dir %s" % (len(ftp_files_list), input_date))
+        if input_verbosity:
+            print("- content of folder")
+            print("- ", ftp_files_list)
+            print("- found %d sat orbit files in dir %s" % (len(ftp_files_list), input_date))
 
         # check if date_dir exists
         if os.path.exists(input_date):
@@ -100,28 +86,20 @@ def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, inpu
 
         # change working dir to selected date directory
         os.chdir(input_date)
-
+        print("- start downloading %d files from ftp" % len(ftp_files_list))
         for sat_orbit_filename in ftp_files_list:
 
             # if overwrite flag is set overwrite all files in dir with new downloads
             if input_overwrite:
-                download_file(ftp_connection, sat_orbit_filename)
-                extract_txt_from_gz_file(sat_orbit_filename, input_overwrite)
+                download_file(ftp_connection, sat_orbit_filename, input_verbosity)
 
             else:
                 #check if file in ftp dir exists in local datespecific directory
                 if os.path.exists(sat_orbit_filename):
-                    print("- found %s in %s dir - skip download" % (sat_orbit_filename, input_date))
-
-                    # check if content of gz file exists
-                    if os.path.exists(sat_orbit_filename.split(".gz")[0]):
-                        print("- found TXT content of %s " % sat_orbit_filename)
-
-                    # if something went wrong and only the gz file was downloaded but not decompressed, decompress the file
-                    else:
-                        extract_txt_from_gz_file(sat_orbit_filename, input_overwrite)
+                    if input_verbosity: print("- found %s in %s dir - skip download" % (sat_orbit_filename, input_date))
 
                 # if the file was not found in the datespecific directory download it from the ftp dir
                 else:
-                    download_file(ftp_connection, sat_orbit_filename)
-                    extract_txt_from_gz_file(sat_orbit_filename, input_overwrite)
+                    download_file(ftp_connection, sat_orbit_filename, input_verbosity)
+
+        print("- finished download")
