@@ -10,8 +10,14 @@ import ftplib
 import gzip
 
 # global variables - critical stuff and not that beautiful - only use them if you know what you are doing
+
 HOST = "ftp.tugraz.at"
 DIRECTORY = "/outgoing/ITSG/teaching/2019SS_Informatik2"
+
+print("Globals")
+print(globals())
+
+
 
 def download(host, directory, filename, overwrite=False):
     """

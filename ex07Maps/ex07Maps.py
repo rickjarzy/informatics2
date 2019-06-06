@@ -64,9 +64,6 @@ def animate_via_function(input_data, input_lon, input_lat):
     anim.save("animation_gravity.mp4")
 
 
-
-
-
 if __name__ == "__main__":
 
     # 1.) Sat Orbit

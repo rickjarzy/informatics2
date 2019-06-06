@@ -5,7 +5,6 @@ import numpy
 from pro02SatelliteVisibilityToolbox import collect_sat_orbit_data, Satellite
 
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Generates an animated visualization of GRACE satellite visibility to the GPS constellation for a single day.")
@@ -41,23 +40,28 @@ if __name__ == "__main__":
 
         # stores the index to all
         satellite_orbits_time_epoch_index_dict = {}
-
+        cou = 0
         for sat in sat_orbit_txt_list:
             index_sat_epoch = 0
 
             # list of satellite epochs of type Satellite
             sat_epoch_list = []
 
+            # read out satdata from gz
             sat_data = numpy.loadtxt(sat, skiprows=2)
 
+            # refzdatum 1858-11-17
 
             # todo: convert mod jul date to UTC
-            jul_date = sat_data[0,0]
+            jul_date = sat_data[cou,0]
+            start_date = datetime.datetime(1858, 11, 17)
+            epoch_date =start_date + datetime.timedelta(days=jul_date)
+
+            print(start_date)
+            print(epoch_date)
             print(jul_date)
-
-            break
-
-
+            cou += 1
+            if cou == 25: break
 
     else:
         print("# ERROR - no date has been handed")
