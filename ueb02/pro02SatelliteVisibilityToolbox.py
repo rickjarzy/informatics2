@@ -1,8 +1,9 @@
 import ftplib
 import os
-import gzip
-import shutil
 import datetime
+import glob
+import numpy
+
 
 class Satellite:
 
@@ -29,6 +30,58 @@ class Satellite:
 
     def __del__(self):
         print("- Delete Instance GPS %s - Epoch %s " % (self.__name, self.__time)) if self.__verbose else False
+
+
+def calc_utc_date(input_julian):
+    start_date = datetime.datetime(1858, 11, 17)
+    epoch_date = start_date + datetime.timedelta(days=input_julian)
+
+    return epoch_date
+
+
+def read_out_sat_orbit_files():
+    # browse working dir ( that is changed in the collect_sat_orbit_data function to the selected date dir)
+    sat_orbit_txt_list = glob.glob('*.gz')
+
+    # dict that has the "GPS Sat name" as key and a list of epochs of type Satellite as value
+    satellite_orbits_dict = {}
+
+    # stores the index to all sat epochs
+    satellite_orbits_time_epoch_index_dict = {}
+
+    cou = 0
+    for sat in sat_orbit_txt_list:
+        index_sat_epoch = 0
+
+        sat_name = sat.split(".")[1]
+        print("reading out and storing data of satellite: ", sat_name)
+        # list of satellite epochs of type Satellite
+        sat_epoch_list = []
+
+        # read out satdata from gz
+        sat_data = numpy.loadtxt(sat, skiprows=2)
+
+        # refzdatum 1858-11-17
+
+        for epoch in sat_data:
+            # calc the UTC date for the mdj entry
+            epoch_date = calc_utc_date(epoch[0])
+
+            # write index of every epoch onto dict - gets refilled every time - not beautiful i hope i find a better solution
+            satellite_orbits_time_epoch_index_dict[epoch_date] = index_sat_epoch
+
+            # append every sat epoch to a list and store it on the satellit_orbits_dict with sat_name as key and the list as value
+            sat_epoch_list.append(Satellite(epoch_date, sat_name, epoch[1], epoch[2], epoch[3]))
+
+            # print(start_date)
+            # print(epoch_date)
+            # print(jul_date)
+            index_sat_epoch += 1
+
+        # store all orbit epochs of each satellite onto a dict with the satname as the key and a list with Satellite objects as value
+        satellite_orbits_dict[sat_name] = sat_epoch_list
+
+    return satellite_orbits_dict, satellite_orbits_time_epoch_index_dict
 
 
 def download_file(ftp_connection, sat_orbit_filename, input_verbosity):
@@ -86,6 +139,7 @@ def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, inpu
 
         # change working dir to selected date directory
         os.chdir(input_date)
+
         print("- start downloading %d files from ftp" % len(ftp_files_list))
         for sat_orbit_filename in ftp_files_list:
 

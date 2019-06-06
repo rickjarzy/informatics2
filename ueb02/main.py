@@ -2,7 +2,7 @@ import argparse
 import glob
 import datetime
 import numpy
-from pro02SatelliteVisibilityToolbox import collect_sat_orbit_data, Satellite
+from pro02SatelliteVisibilityToolbox import collect_sat_orbit_data, Satellite, read_out_sat_orbit_files
 
 
 if __name__ == "__main__":
@@ -30,38 +30,18 @@ if __name__ == "__main__":
 
     if args.date:
 
-        #todo: check if input date is of type datetime YYYY-MM-DD
+        # download sat orbit data from ftp server
         collect_sat_orbit_data(args.date[0], args.dir, args.time[0], args.time[1], args.overwrite, args.verbosity)
 
-        sat_orbit_txt_list = glob.glob('*.gz')
+        # read out the sat orbit data from the dir that was created or selected
+        sat_orbits_dict, sat_orbits_indizes = read_out_sat_orbit_files()
 
-        # dict that has the "GPS Sat name" as key and a list of epochs of type Satellite as value
-        satellite_orbits_dict = {}
+        if args.time:
 
-        # stores the index to all
-        satellite_orbits_time_epoch_index_dict = {}
-        cou = 0
-        for sat in sat_orbit_txt_list:
-            index_sat_epoch = 0
+            start_time = calc_utc_date
 
-            # list of satellite epochs of type Satellite
-            sat_epoch_list = []
 
-            # read out satdata from gz
-            sat_data = numpy.loadtxt(sat, skiprows=2)
 
-            # refzdatum 1858-11-17
-
-            # todo: convert mod jul date to UTC
-            jul_date = sat_data[cou,0]
-            start_date = datetime.datetime(1858, 11, 17)
-            epoch_date =start_date + datetime.timedelta(days=jul_date)
-
-            print(start_date)
-            print(epoch_date)
-            print(jul_date)
-            cou += 1
-            if cou == 25: break
 
     else:
         print("# ERROR - no date has been handed")
