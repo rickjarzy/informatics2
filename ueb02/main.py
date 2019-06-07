@@ -2,7 +2,7 @@ import argparse
 import glob
 import datetime
 import numpy
-from pro02SatelliteVisibilityToolbox import collect_sat_orbit_data, Satellite, read_out_sat_orbit_files
+from pro02SatelliteVisibilityToolbox import collect_sat_orbit_data, Satellite, read_out_sat_orbit_files, calc_utc_date
 
 
 if __name__ == "__main__":
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--novisibilty", help="don't show visibility lines", action="store_true")
     parser.add_argument("-o", "--outfile", help="save animation to this file")
     parser.add_argument("-t", "--time", help="start and end time in hours to limit animation "
-                                             "\n default start:9 - end:10", nargs=2, default=[9, 10])
+                                             "\n default start:9 - end:10", nargs=2)
 
     parser.add_argument("-d", "--dir", help="specifiy the ftp directory where to search for the date specific orbit files\n"
                                             "default: /outgoing/ITSG/teaching/2019SS_Informatik2/orbit/",
@@ -30,17 +30,39 @@ if __name__ == "__main__":
 
     if args.date:
 
+        # month - specifies blue marble picture
+        blue_marble_month_filename = "bluemarble%s.jpg" % args.date[0].split("-")[1]
+
         # download sat orbit data from ftp server
-        collect_sat_orbit_data(args.date[0], args.dir, args.time[0], args.time[1], args.overwrite, args.verbosity)
+        collect_sat_orbit_data(args.date[0], blue_marble_month_filename, args.dir, args.overwrite, args.verbosity)
 
         # read out the sat orbit data from the dir that was created or selected
-        sat_orbits_dict, sat_orbits_indizes = read_out_sat_orbit_files()
+        sat_orbits_dict, sat_orbits_indizes = read_out_sat_orbit_files(args.verbosity)
 
+        # list with all satellite names that are visibible at that day
+        sat_names = [sat_name for sat_name in sat_orbits_dict]
+
+        # check if some time intervall has been handed
         if args.time:
+            print("\nhanded new time ranges")
+            args_time_start = float(args.time[0])
+            args_time_end = float(args.time[1])
 
-            start_time = calc_utc_date
+            datetime_start = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_start)
+            datetime_end = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
 
+            print("start intervall: ", datetime_start)
+            print("end intervall: ", datetime_end)
 
+            index_start = sat_orbits_indizes[datetime_start]
+            index_end = sat_orbits_indizes[datetime_end]
+
+        else:
+            index_start = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=0)]
+            index_end = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=24)]
+
+        print("Start index: ", index_start, " - end index: ", index_end)
+        print("sat names: ", sat_names)
 
 
     else:

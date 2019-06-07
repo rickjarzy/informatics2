@@ -31,6 +31,27 @@ class Satellite:
     def __del__(self):
         print("- Delete Instance GPS %s - Epoch %s " % (self.__name, self.__time)) if self.__verbose else False
 
+    # make protected attributes callable
+    @property
+    def time(self):
+        return self.__time
+
+    @property
+    def x(self):
+        return self.__x
+
+    @property
+    def y(self):
+        return self.__y
+
+    @property
+    def z(self):
+        return self.__z
+
+    @property
+    def name(self):
+        return self.__name
+
 
 def calc_utc_date(input_julian):
     start_date = datetime.datetime(1858, 11, 17)
@@ -39,7 +60,7 @@ def calc_utc_date(input_julian):
     return epoch_date
 
 
-def read_out_sat_orbit_files():
+def read_out_sat_orbit_files(input_verbosity):
     # browse working dir ( that is changed in the collect_sat_orbit_data function to the selected date dir)
     sat_orbit_txt_list = glob.glob('*.gz')
 
@@ -49,12 +70,11 @@ def read_out_sat_orbit_files():
     # stores the index to all sat epochs
     satellite_orbits_time_epoch_index_dict = {}
 
-    cou = 0
     for sat in sat_orbit_txt_list:
         index_sat_epoch = 0
 
         sat_name = sat.split(".")[1]
-        print("reading out and storing data of satellite: ", sat_name)
+        print("- reading out and storing data of satellite: ", sat_name)
         # list of satellite epochs of type Satellite
         sat_epoch_list = []
 
@@ -71,7 +91,7 @@ def read_out_sat_orbit_files():
             satellite_orbits_time_epoch_index_dict[epoch_date] = index_sat_epoch
 
             # append every sat epoch to a list and store it on the satellit_orbits_dict with sat_name as key and the list as value
-            sat_epoch_list.append(Satellite(epoch_date, sat_name, epoch[1], epoch[2], epoch[3]))
+            sat_epoch_list.append(Satellite(epoch_date, sat_name, epoch[1], epoch[2], epoch[3], input_verbosity))
 
             # print(start_date)
             # print(epoch_date)
@@ -97,7 +117,7 @@ def download_file(ftp_connection, sat_orbit_filename, input_verbosity):
         ftp_connection.retrbinary("RETR %s" % sat_orbit_filename, download_file.write)
 
 
-def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, input_overwrite, input_verbosity):
+def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_ftp_dir, input_overwrite, input_verbosity):
 
 
     """
@@ -111,18 +131,14 @@ def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, inpu
     :return: None
     """
 
-    print("\n- start FTP connection\n-----------------------\n- date: %s \n- starttime: %s\n- endtime: %s"%(input_date, time_start, time_end))
+    print("\n- start FTP connection\n-----------------------\n- date: %s " % (input_date))
 
     # access ftp server
     with ftplib.FTP("ftp.tugraz.at") as ftp_connection:
 
+        # login and change dir on ftp to the date specific dir for the sat orbits
         ftp_connection.login()
         ftp_connection.cwd(input_ftp_dir + input_date)
-
-
-
-        # todo: split date and download blue marble picture for the month of date
-        # todo: download blue marble!!
 
         ftp_files_list = ftp_connection.nlst()
         if input_verbosity:
@@ -155,5 +171,17 @@ def collect_sat_orbit_data(input_date, input_ftp_dir, time_start, time_end, inpu
                 # if the file was not found in the datespecific directory download it from the ftp dir
                 else:
                     download_file(ftp_connection, sat_orbit_filename, input_verbosity)
+
+        # change to blue marble dir
+        ftp_connection.cwd("/outgoing/ITSG/teaching/2019SS_Informatik2/bluemarble/")
+
+        # download blue marble picture
+        if os.path.exists(input_blue_marble_month_filename):
+            print("- blue marble file %s allready exists - skip download" % input_blue_marble_month_filename)
+            pass
+
+        else:
+            print("- start downloading %s from ftp" % input_blue_marble_month_filename)
+            download_file(ftp_connection, input_blue_marble_month_filename, input_verbosity)
 
         print("- finished download")
