@@ -43,6 +43,8 @@ if __name__ == "__main__":
         sat_names = [sat_name for sat_name in sat_orbits_dict]
 
         # check if some time intervall has been handed
+
+        # todo: finish logic to catch and round time input that contains seconds
         if args.time:
             print("\nhanded new time ranges")
             args_time_start = float(args.time[0])
