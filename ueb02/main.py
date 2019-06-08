@@ -48,6 +48,28 @@ if __name__ == "__main__":
             args_time_start = float(args.time[0])
             args_time_end = float(args.time[1])
 
+            start_datetime_object = sat_orbits_dict[sat_names[0]][0].time +datetime.timedelta(hours=args_time_start)
+            end_datetime_object = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
+
+            if start_datetime_object.second > 0:
+
+                print("Seconds start: ", start_datetime_object.second)
+            if end_datetime_object.second > 0:
+
+                print("Seconds end: ", end_datetime_object.second)
+                sec = end_datetime_object.second
+
+                delta = 60 - sec
+
+                print("Delta: ", delta)
+
+                new_end_time = end_datetime_object + datetime.timedelta(seconds=delta)
+
+                print("new end time: ", new_end_time)
+
+
+
+
             datetime_start = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_start)
             datetime_end = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
 
