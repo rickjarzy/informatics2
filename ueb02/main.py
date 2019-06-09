@@ -50,6 +50,7 @@ if __name__ == "__main__":
             # todo: finish logic for wrong time intervall input
             # todo: select intervall sat data
             # todo: plot stuff
+            # todo: catch value errors for time interval
 
             # check if time intervall has been handed
             if args.time:
@@ -59,7 +60,7 @@ if __name__ == "__main__":
                 print("\n- start plotting and writing out animation\n"
                       "  ----------------------------------------")
                 if (args_time_start>=0 and args_time_end<24) and (args_time_end>=args_time_start and args_time_end<=24):
-                    print("\nhanded new time ranges")
+                    print("handed new time ranges")
 
 
                     start_datetime_object = sat_orbits_dict[sat_names[0]][0].time +datetime.timedelta(hours=args_time_start)
@@ -95,24 +96,47 @@ if __name__ == "__main__":
                     index_start = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=0)]
                     index_end = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=24)]
 
-
+                print("Start index: ", index_start, " - end index: ", index_end)
+                print("- processing %s satellites : " % sat_names, sat_names)
                 blue_marble_img = plt.imread(blue_marble_month_filename)
 
                 # plot trajectory:
                 fig = plt.figure()
                 ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-                ax.imshow(blue_marble_img)
+
+                satellite_tail = 1
+
+                #ax.imshow(blue_marble_img, origin='upper')
                 for sat_name in sat_names:
-                    sat_data_phi = [satellite.phi() for satellite in sat_orbits_dict[sat_name][index_start:index_end]]
-                    sat_data_lam = [satellite.lam() for satellite in sat_orbits_dict[sat_name][index_start:index_end]]
 
-                    ax.plot(sat_data_lam, sat_data_phi, label=sat_name, transform=ccrs.Geodetic())
+                    if "graceA" == sat_name:
+                        print("GRACE A MATCH")
+                        sat_label = "GRACE A"
+                        sat_color = "red"
 
-                plt.legend()
+                    else:
+                        sat_label = "GPS"
+                        sat_color = "green"
+
+
+                    print("- proccessing satorbit for %s" % sat_name)
+
+                    for sat_data_index in range(index_start, index_end):
+
+                        sat_data_phi = [satellite.phi() for satellite in sat_orbits_dict[sat_name][index_start-satellite_tail:index_start]]
+                        sat_data_lam = [satellite.lam() for satellite in sat_orbits_dict[sat_name][index_start-satellite_tail:index_start]]
+
+                        plot_object = ax.plot(sat_data_lam, sat_data_phi, label=sat_label, color=sat_color, transform=ccrs.Geodetic())
+
+                        ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]))
+
+                        # dynamic tail of satellite tail
+                        if satellite_tail <= 5:
+                            satellite_tail += 1
+                handles, labels = ax.get_legend_handles_labels()
+
+                plt.legend(list(set(handles)), list(set(labels)))
                 plt.show()
-
-                print("Start index: ", index_start, " - end index: ", index_end)
-                print("sat names: ", sat_names)
 
 
         else:
