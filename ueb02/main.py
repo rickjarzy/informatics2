@@ -45,7 +45,12 @@ if __name__ == "__main__":
         # check if some time intervall has been handed
 
         # todo: finish logic to catch and round time input that contains seconds
-        if args.time:
+        # todo: finish logic for wrong time intervall input
+        # todo: select intervall sat data
+        # todo: plot stuff
+
+
+        if (float(args.time[0])>=0 and float(args.time[0])<24) and (args.time[1]>=float(args.time[0]) and float(args.time[1])<24):
             print("\nhanded new time ranges")
             args_time_start = float(args.time[0])
             args_time_end = float(args.time[1])
