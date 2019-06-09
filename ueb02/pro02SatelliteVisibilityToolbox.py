@@ -52,6 +52,16 @@ class Satellite:
     def name(self):
         return self.__name
 
+    def r(self):
+        return numpy.sqrt( self.__x**2 + self.__y**2 + self.__z**2)
+
+    def phi(self):
+        return numpy.arcsin(self.__z/self.r()) * (180 / numpy.pi)
+
+    def lam(self):
+        return numpy.arctan2(self.__y, self.__x) * (180 / numpy.pi)
+
+
 
 def calc_utc_date(input_julian):
     start_date = datetime.datetime(1858, 11, 17)
@@ -69,12 +79,13 @@ def read_out_sat_orbit_files(input_verbosity):
 
     # stores the index to all sat epochs
     satellite_orbits_time_epoch_index_dict = {}
-
+    print("- start reading out and storing of sat orbit data\n"
+          "  -----------------------------------------------")
     for sat in sat_orbit_txt_list:
         index_sat_epoch = 0
 
         sat_name = sat.split(".")[1]
-        print("- reading out and storing data of satellite: ", sat_name)
+        if input_verbosity: ("- reading out and storing data of satellite: ", sat_name)
         # list of satellite epochs of type Satellite
         sat_epoch_list = []
 
@@ -91,7 +102,7 @@ def read_out_sat_orbit_files(input_verbosity):
             satellite_orbits_time_epoch_index_dict[epoch_date] = index_sat_epoch
 
             # append every sat epoch to a list and store it on the satellit_orbits_dict with sat_name as key and the list as value
-            sat_epoch_list.append(Satellite(epoch_date, sat_name, epoch[1], epoch[2], epoch[3], input_verbosity))
+            sat_epoch_list.append(Satellite(epoch_date, sat_name, epoch[1], epoch[2], epoch[3]))
 
             # print(start_date)
             # print(epoch_date)
@@ -100,6 +111,7 @@ def read_out_sat_orbit_files(input_verbosity):
 
         # store all orbit epochs of each satellite onto a dict with the satname as the key and a list with Satellite objects as value
         satellite_orbits_dict[sat_name] = sat_epoch_list
+    print("- finished reading out and storing of sat orbit data")
 
     return satellite_orbits_dict, satellite_orbits_time_epoch_index_dict
 
@@ -131,7 +143,7 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
     :return: None
     """
 
-    print("\n- start FTP connection\n-----------------------\n- date: %s " % (input_date))
+    print("\n- start FTP connection\n  -----------------------\n- date: %s " % (input_date))
 
     # access ftp server
     with ftplib.FTP("ftp.tugraz.at") as ftp_connection:
@@ -142,9 +154,9 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
 
         ftp_files_list = ftp_connection.nlst()
         if input_verbosity:
-            print("- content of folder")
+            print("- content of folder %s\n" % input_ftp_dir)
             print("- ", ftp_files_list)
-            print("- found %d sat orbit files in dir %s" % (len(ftp_files_list), input_date))
+            print("\n- found %d sat orbit files in dir %s" % (len(ftp_files_list), input_date))
 
         # check if date_dir exists
         if os.path.exists(input_date):
@@ -156,7 +168,7 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
         # change working dir to selected date directory
         os.chdir(input_date)
 
-        print("- start downloading %d files from ftp" % len(ftp_files_list))
+        print("\n- start downloading %d files from ftp ..." % len(ftp_files_list))
         for sat_orbit_filename in ftp_files_list:
 
             # if overwrite flag is set overwrite all files in dir with new downloads
@@ -177,11 +189,11 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
 
         # download blue marble picture
         if os.path.exists(input_blue_marble_month_filename):
-            print("- blue marble file %s allready exists - skip download" % input_blue_marble_month_filename)
+            print("\n- blue marble file %s allready exists - skip download" % input_blue_marble_month_filename)
             pass
 
         else:
-            print("- start downloading %s from ftp" % input_blue_marble_month_filename)
+            print("\n- start downloading %s from ftp" % input_blue_marble_month_filename)
             download_file(ftp_connection, input_blue_marble_month_filename, input_verbosity)
 
-        print("- finished download")
+        print("- finished download - close connection\n")

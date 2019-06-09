@@ -1,7 +1,9 @@
 import argparse
-import glob
 import datetime
-import numpy
+from matplotlib import pyplot as plt
+import matplotlib.animation as animation
+import cartopy.crs as ccrs
+
 from pro02SatelliteVisibilityToolbox import collect_sat_orbit_data, Satellite, read_out_sat_orbit_files, calc_utc_date
 
 
@@ -27,74 +29,95 @@ if __name__ == "__main__":
 
     print("Args: ", args)
     print("args time: ", args.time)
+    try:
+        if args.date:
 
-    if args.date:
+            # month - specifies blue marble picture
+            blue_marble_month_filename = "bluemarble%s.jpg" % args.date[0].split("-")[1]
 
-        # month - specifies blue marble picture
-        blue_marble_month_filename = "bluemarble%s.jpg" % args.date[0].split("-")[1]
+            # download sat orbit data from ftp server
+            collect_sat_orbit_data(args.date[0], blue_marble_month_filename, args.dir, args.overwrite, args.verbosity)
 
-        # download sat orbit data from ftp server
-        collect_sat_orbit_data(args.date[0], blue_marble_month_filename, args.dir, args.overwrite, args.verbosity)
+            # read out the sat orbit data from the dir that was created or selected
+            sat_orbits_dict, sat_orbits_indizes = read_out_sat_orbit_files(args.verbosity)
 
-        # read out the sat orbit data from the dir that was created or selected
-        sat_orbits_dict, sat_orbits_indizes = read_out_sat_orbit_files(args.verbosity)
+            # list with all satellite names that are visibible at that day
+            sat_names = [sat_name for sat_name in sat_orbits_dict]
 
-        # list with all satellite names that are visibible at that day
-        sat_names = [sat_name for sat_name in sat_orbits_dict]
+            # check if some time intervall has been handed
 
-        # check if some time intervall has been handed
+            # todo: finish logic to catch and round time input that contains seconds
+            # todo: finish logic for wrong time intervall input
+            # todo: select intervall sat data
+            # todo: plot stuff
 
-        # todo: finish logic to catch and round time input that contains seconds
-        # todo: finish logic for wrong time intervall input
-        # todo: select intervall sat data
-        # todo: plot stuff
+            # check if time intervall has been handed
+            if args.time:
 
-
-        if (float(args.time[0])>=0 and float(args.time[0])<24) and (args.time[1]>=float(args.time[0]) and float(args.time[1])<24):
-            print("\nhanded new time ranges")
-            args_time_start = float(args.time[0])
-            args_time_end = float(args.time[1])
-
-            start_datetime_object = sat_orbits_dict[sat_names[0]][0].time +datetime.timedelta(hours=args_time_start)
-            end_datetime_object = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
-
-            if start_datetime_object.second > 0:
-
-                print("Seconds start: ", start_datetime_object.second)
-            if end_datetime_object.second > 0:
-
-                print("Seconds end: ", end_datetime_object.second)
-                sec = end_datetime_object.second
-
-                delta = 60 - sec
-
-                print("Delta: ", delta)
-
-                new_end_time = end_datetime_object + datetime.timedelta(seconds=delta)
-
-                print("new end time: ", new_end_time)
+                args_time_start = float(args.time[0])
+                args_time_end = float(args.time[1])
+                print("\n- start plotting and writing out animation\n"
+                      "  ----------------------------------------")
+                if (args_time_start>=0 and args_time_end<24) and (args_time_end>=args_time_start and args_time_end<=24):
+                    print("\nhanded new time ranges")
 
 
+                    start_datetime_object = sat_orbits_dict[sat_names[0]][0].time +datetime.timedelta(hours=args_time_start)
+                    end_datetime_object = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
+
+                    if start_datetime_object.second > 0:
+
+                        print("Seconds start: ", start_datetime_object.second)
+                    if end_datetime_object.second > 0:
+
+                        print("Seconds end: ", end_datetime_object.second)
+                        sec = end_datetime_object.second
+
+                        delta = 60 - sec
+
+                        print("Delta: ", delta)
+
+                        new_end_time = end_datetime_object + datetime.timedelta(seconds=delta)
+
+                        print("new end time: ", new_end_time)
+
+                    datetime_start = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_start)
+                    datetime_end = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
+
+                    print("start intervall: ", datetime_start)
+                    print("end intervall: ", datetime_end)
+
+                    index_start = sat_orbits_indizes[datetime_start]
+                    index_end = sat_orbits_indizes[datetime_end]
+
+                else:
+                    print("No or wrong time intervall has been handed {} : {} - switching to 0 : 24 ".format(args.time[0], args.time[1]))
+                    index_start = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=0)]
+                    index_end = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=24)]
 
 
-            datetime_start = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_start)
-            datetime_end = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
+                blue_marble_img = plt.imread(blue_marble_month_filename)
 
-            print("start intervall: ", datetime_start)
-            print("end intervall: ", datetime_end)
+                # plot trajectory:
+                fig = plt.figure()
+                ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+                ax.imshow(blue_marble_img)
+                for sat_name in sat_names:
+                    sat_data_phi = [satellite.phi() for satellite in sat_orbits_dict[sat_name][index_start:index_end]]
+                    sat_data_lam = [satellite.lam() for satellite in sat_orbits_dict[sat_name][index_start:index_end]]
 
-            index_start = sat_orbits_indizes[datetime_start]
-            index_end = sat_orbits_indizes[datetime_end]
+                    ax.plot(sat_data_lam, sat_data_phi, label=sat_name, transform=ccrs.Geodetic())
+
+                plt.legend()
+                plt.show()
+
+                print("Start index: ", index_start, " - end index: ", index_end)
+                print("sat names: ", sat_names)
+
 
         else:
-            index_start = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=0)]
-            index_end = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=24)]
-
-        print("Start index: ", index_start, " - end index: ", index_end)
-        print("sat names: ", sat_names)
-
-
-    else:
-        print("# ERROR - no date has been handed")
+            print("# ERROR - no date has been handed")
+    except KeyboardInterrupt:
+        print("Programm stopped by user via STRG+C")
 
     print("Programm ENDE")
