@@ -23,7 +23,7 @@ def animate(i, data, text, coast, grid):
     :return: text, coast, grid - have to be returned in the exact same way they have handed to the function
     """
     print("create frame for month ", i)
-    print("max: ",numpy.nanmax(gravity_data[i]), " min: ", numpy.nanmin(gravity_data[i]))
+    print("max: ", numpy.nanmax(gravity_data[i]), " min: ", numpy.nanmin(gravity_data[i]))
     grid.set_array(data[i].flatten())
     text.set_text("Month: 2008-{}".format(i+1))
     return text, coast, grid

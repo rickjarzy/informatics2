@@ -1,8 +1,14 @@
+# Paul Arzberger
+# 00311430
+# Informatics 2 - SS19
+# Gruppe A - Programm 2: Satellitensichtbarkeiten
+
 import argparse
 import datetime
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 import cartopy.crs as ccrs
+
 
 from pro02SatelliteVisibilityToolbox import collect_sat_orbit_data, Satellite, read_out_sat_orbit_files, calc_utc_date
 
@@ -103,40 +109,48 @@ if __name__ == "__main__":
                 # plot trajectory:
                 fig = plt.figure()
                 ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+                print("type o ax : ", type(ax))
+                #satellite_tail = 1
 
-                satellite_tail = 1
+                #ax.imshow(blue_marble_img, origin='upper', transform=ccrs.Robinson())
 
-                #ax.imshow(blue_marble_img, origin='upper')
-                for sat_name in sat_names:
+                # frames_for_anim_list = []
+                # for sat_name in sat_names:
+                #
+                #     if "graceA" == sat_name:
+                #         print("GRACE A MATCH")
+                #         sat_label = "GRACE A"
+                #         sat_color = "red"
+                #
+                #     else:
+                #         sat_label = "GPS"
+                #         sat_color = "green"
+                #
+                #     print("- proccessing satorbit for %s" % sat_name)
+                #
+                #     for sat_data_index in range(index_start, index_end+1):
+                #         #print(sat_data_index, " - ", sat_orbits_dict[sat_name][sat_data_index].time)
+                #
+                #         sat_data_phi = [satellite.phi() for satellite in sat_orbits_dict[sat_name][sat_data_index-satellite_tail:sat_data_index]]
+                #         sat_data_lam = [satellite.lam() for satellite in sat_orbits_dict[sat_name][sat_data_index-satellite_tail:sat_data_index]]
+                #
+                #         ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]))
+                #         plot_orbit = ax.plot(sat_data_lam, sat_data_phi, label=sat_label, color=sat_color, transform=ccrs.Geodetic())
+                #
+                #         # dynamic tail of satellite tail
+                #         if satellite_tail <= 5:
+                #             satellite_tail += 1
+                #handles, labels = ax.get_legend_handles_labels()
 
-                    if "graceA" == sat_name:
-                        print("GRACE A MATCH")
-                        sat_label = "GRACE A"
-                        sat_color = "red"
+                #plt.legend(list(set(handles)), list(set(labels)))
+                #plt.legend()
+                #plt.show()
 
-                    else:
-                        sat_label = "GPS"
-                        sat_color = "green"
+                anim = animation.FuncAnimation()
+
+                #anim.save("animation.mp4")
 
 
-                    print("- proccessing satorbit for %s" % sat_name)
-
-                    for sat_data_index in range(index_start, index_end):
-
-                        sat_data_phi = [satellite.phi() for satellite in sat_orbits_dict[sat_name][index_start-satellite_tail:index_start]]
-                        sat_data_lam = [satellite.lam() for satellite in sat_orbits_dict[sat_name][index_start-satellite_tail:index_start]]
-
-                        plot_object = ax.plot(sat_data_lam, sat_data_phi, label=sat_label, color=sat_color, transform=ccrs.Geodetic())
-
-                        ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]))
-
-                        # dynamic tail of satellite tail
-                        if satellite_tail <= 5:
-                            satellite_tail += 1
-                handles, labels = ax.get_legend_handles_labels()
-
-                plt.legend(list(set(handles)), list(set(labels)))
-                plt.show()
 
 
         else:

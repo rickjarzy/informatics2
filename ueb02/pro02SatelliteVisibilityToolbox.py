@@ -1,9 +1,14 @@
+# Paul Arzberger
+# 00311430
+# Informatics 2 - SS19
+# Gruppe A - Programm 2: Satellitensichtbarkeiten
+
 import ftplib
 import os
 import datetime
 import glob
 import numpy
-
+import cartopy.crs as ccrs
 
 class Satellite:
 
@@ -61,7 +66,32 @@ class Satellite:
     def lam(self):
         return numpy.arctan2(self.__y, self.__x) * (180 / numpy.pi)
 
+def animate_orbit_movement(i, input_sat_orbit_dict, input_sat_names, input_index_start, input_orbit_plot_object):
+    satellite_tail = 1
 
+    for sat_name in input_sat_names:
+
+        if "graceA" == sat_name:
+            print("GRACE A MATCH")
+            sat_label = "GRACE A"
+            sat_color = "red"
+
+        else:
+            sat_label = "GPS"
+            sat_color = "green"
+
+        print("- proccessing satorbit for %s" % sat_name)
+
+        sat_data_phi = [satellite.phi() for satellite in input_sat_orbit_dict[sat_name][input_index_start + i - satellite_tail : input_index_start + i]]
+        sat_data_lam = [satellite.lam() for satellite in input_sat_orbit_dict[sat_name][input_index_start + i - satellite_tail : input_index_start + i]]
+
+        input_orbit_plot_object.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]))
+        input_orbit_plot_object.set_data(sat_data_lam, sat_data_phi, color=sat_color, transform=ccrs.Geodetic())
+
+        if satellite_tail <= 5:
+            satellite_tail += 1
+
+    return input_sat_orbit_dict, input_index_start, input_orbit_plot_object
 
 def calc_utc_date(input_julian):
     start_date = datetime.datetime(1858, 11, 17)
