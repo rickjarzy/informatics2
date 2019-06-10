@@ -65,10 +65,10 @@ class Satellite:
 
     def lam(self):
         return numpy.arctan2(self.__y, self.__x) * (180 / numpy.pi)
-
-def animate_orbit_movement(i, input_sat_orbit_dict, input_sat_names, input_index_start, input_orbit_plot_object):
+# fargs=(sat_orbits_dict, sat_names, index_start, plot_orbit_object[0], plot_annotation)
+def animate_orbit_movement(i, input_sat_orbit_dict, input_sat_names, input_index_start, input_orbit_plot_object, input_anotation):
     satellite_tail = 1
-
+    print("func aufruf ", i)
     for sat_name in input_sat_names:
 
         if "graceA" == sat_name:
@@ -85,13 +85,15 @@ def animate_orbit_movement(i, input_sat_orbit_dict, input_sat_names, input_index
         sat_data_phi = [satellite.phi() for satellite in input_sat_orbit_dict[sat_name][input_index_start + i - satellite_tail : input_index_start + i]]
         sat_data_lam = [satellite.lam() for satellite in input_sat_orbit_dict[sat_name][input_index_start + i - satellite_tail : input_index_start + i]]
 
-        input_orbit_plot_object.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]))
-        input_orbit_plot_object.set_data(sat_data_lam, sat_data_phi, color=sat_color, transform=ccrs.Geodetic())
+        input_anotation.set_text(sat_name)
+        input_anotation.xy = (sat_data_lam[-1], sat_data_phi[-1])
+        input_orbit_plot_object.set_data(sat_data_lam, sat_data_phi)
+        input_orbit_plot_object.set_color(sat_color)
 
         if satellite_tail <= 5:
             satellite_tail += 1
 
-    return input_sat_orbit_dict, input_index_start, input_orbit_plot_object
+    return input_sat_orbit_dict, input_index_start, input_orbit_plot_object, input_anotation
 
 def calc_utc_date(input_julian):
     start_date = datetime.datetime(1858, 11, 17)
