@@ -3,6 +3,14 @@
 # Informatics 2 - SS19
 # Gruppe A - Programm 2: Satellitensichtbarkeiten
 
+# todo: finish logic to catch and round time input that contains seconds
+# todo: finish logic for wrong time intervall input
+# todo: plot stuff
+# todo: catch value errors for time interval
+# todo: finish dynamic satellite tail logic
+# todo: cmd - visibility lines
+
+
 import argparse
 import datetime
 from matplotlib import pyplot as plt
@@ -14,7 +22,7 @@ from pro02SatelliteVisibilityToolbox import collect_sat_orbit_data, \
                                             Satellite, \
                                             read_out_sat_orbit_files, \
                                             calc_utc_date,\
-                                            animate_orbit_movement
+                                            animate_orbit_movement, plot_orbit_time_series
 
 
 if __name__ == "__main__":
@@ -54,13 +62,6 @@ if __name__ == "__main__":
             # list with all satellite names that are visibible at that day
             sat_names = [sat_name for sat_name in sat_orbits_dict]
 
-            # check if some time intervall has been handed
-
-            # todo: finish logic to catch and round time input that contains seconds
-            # todo: finish logic for wrong time intervall input
-            # todo: select intervall sat data
-            # todo: plot stuff
-            # todo: catch value errors for time interval
 
             # check if time intervall has been handed
             if args.time:
@@ -72,10 +73,11 @@ if __name__ == "__main__":
                 if (args_time_start>=0 and args_time_end<24) and (args_time_end>=args_time_start and args_time_end<=24):
                     print("handed new time ranges")
 
-
+                    # create time stamp of type datetime
                     start_datetime_object = sat_orbits_dict[sat_names[0]][0].time +datetime.timedelta(hours=args_time_start)
                     end_datetime_object = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
 
+                    # "translate" fractal to seconds
                     if start_datetime_object.second > 0:
 
                         print("Seconds start: ", start_datetime_object.second)
@@ -92,6 +94,7 @@ if __name__ == "__main__":
 
                         print("new end time: ", new_end_time)
 
+                    # start time and end time of selectetd intervall - they are used to select the indizes of the epoch list
                     datetime_start = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_start)
                     datetime_end = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
 
@@ -102,39 +105,49 @@ if __name__ == "__main__":
                     index_end = sat_orbits_indizes[datetime_end]
 
                 else:
+                    # if no time values are handed the default values are used - 12 - 13 h
                     print("No or wrong time intervall has been handed {} : {} - switching to 0 : 24 ".format(args.time[0], args.time[1]))
-                    index_start = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=0)]
-                    index_end = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=24)]
+                    index_start = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=12)]
+                    index_end = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=13)]
 
                 print("Start index: ", index_start, " - end index: ", index_end)
-                print("- processing %s satellites : " % sat_names, sat_names)
+                print("processing %s satellites ... " % str(len(sat_names)))
+
                 blue_marble_img = plt.imread(blue_marble_month_filename)
 
                 # plot trajectory:
-                fig = plt.figure()
-                ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-                #print("type o ax : ", type(ax))
-                plot_orbit_object = ax.plot([0],[0], transform=ccrs.Geodetic)
-                plot_annotation = ax.annotate("", (0, 0))
-                #print(plot_anotation.__dir__())
-                #print(plot_orbit_object[0].__dir__())
-                #handles, labels = ax.get_legend_handles_labels()
 
-                #plt.legend(list(set(handles)), list(set(labels)))
-                #plt.legend()
-                #plt.show()
+                # ARTITS ANIMATION
+                # ===============
+                #frames, artist_fig = plot_orbit_time_series(sat_orbits_dict, sat_names, index_start, index_end, blue_marble_month_filename)
+                #anim = animation.ArtistAnimation(artist_fig, frames, interval=50, repeat_delay=1000)
 
                 number_of_iteration = abs(index_start - index_end)
                 print("number of interations: ", number_of_iteration)
-                anim = animation.FuncAnimation(fig,
-                                               animate_orbit_movement,
-                                               number_of_iteration,
-                                               fargs=(sat_orbits_dict, sat_names, index_start, plot_orbit_object[0], plot_annotation),
-                                               interval=50
-                                               )
 
-                print(anim)
-                anim.save("animation.mp4")
+                # FUNC ANIMATION
+                # ==============
+
+                fig = plt.figure()
+                ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+                ax.imshow(blue_marble_img, transform=ccrs.Robinson())
+                anim = animation.FuncAnimation(fig, animate_orbit_movement, number_of_iteration, fargs=(sat_orbits_dict, sat_names, index_start, ax), interval=250)
+
+                # check if outfile was handed or use default name constructed by date and time
+                if args.outfile:
+                    outfile_str = args.outfile
+                    if ".mp4" in outfile_str:
+                        pass
+                    else:
+                        outfile_str += ".mp4"
+                else:
+                    if args.time:
+                        outfile_str = "animation_%s_%s-%s.mp4" % (args.date[0], args.time[0].replace(".", "-"), args.time[1].replace(".", "-"))
+                    else:
+                        outfile_str = "animation_%s.mp4" % (args.date[0])
+
+                print("start rendering animation %s ..." % outfile_str)
+                anim.save(outfile_str)
 
         else:
             print("# ERROR - no date has been handed")

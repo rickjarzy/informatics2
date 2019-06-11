@@ -9,6 +9,7 @@ import datetime
 import glob
 import numpy
 import cartopy.crs as ccrs
+from matplotlib import pyplot as plt
 
 class Satellite:
 
@@ -57,6 +58,8 @@ class Satellite:
     def name(self):
         return self.__name
 
+    # member functions
+
     def r(self):
         return numpy.sqrt( self.__x**2 + self.__y**2 + self.__z**2)
 
@@ -65,35 +68,118 @@ class Satellite:
 
     def lam(self):
         return numpy.arctan2(self.__y, self.__x) * (180 / numpy.pi)
-# fargs=(sat_orbits_dict, sat_names, index_start, plot_orbit_object[0], plot_annotation)
-def animate_orbit_movement(i, input_sat_orbit_dict, input_sat_names, input_index_start, input_orbit_plot_object, input_anotation):
+
+    def get_koords(self):
+        return numpy.array([self.__x, self.__y, self.__z])
+
+
+def plot_orbit_time_series(input_sat_orbits_dict, input_sat_names, input_index_start, input_index_end, input_blue_marble_month_filename):
     satellite_tail = 1
-    print("func aufruf ", i)
+
+    blue_marble_img = plt.imread(input_blue_marble_month_filename)
+
+    # plot trajectory:
+    fig = plt.figure()
+
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+
+    frames_for_anim_list = []
+    for sat_data_index in range(input_index_start, input_index_end + 1, 1):
+
+        for sat_name in input_sat_names:
+
+            if "graceA" == sat_name:
+                #print("GRACE A MATCH")
+                sat_label = "GRACE A"
+                sat_color = "red"
+
+            else:
+                sat_label = "GPS"
+                sat_color = "green"
+
+            #print("- proccessing satorbit for %s" % sat_name, " - at epoch: ", sat_data_index)
+
+            #print(sat_data_index, " - ", input_sat_orbits_dict[sat_name][sat_data_index].time)
+
+            sat_data_phi = [satellite.phi() for satellite in input_sat_orbits_dict[sat_name][sat_data_index - satellite_tail:sat_data_index]]
+            sat_data_lam = [satellite.lam() for satellite in input_sat_orbits_dict[sat_name][sat_data_index - satellite_tail:sat_data_index]]
+
+            #print("sat phi: ", sat_data_phi)
+
+            ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]))
+            ax.set_xlabel("PHI")
+            ax.set_ylabel("LAM")
+            orbit_frame = ax.plot(sat_data_lam, sat_data_phi, label=sat_label, color=sat_color, transform=ccrs.Geodetic())
+
+
+            frames_for_anim_list.append((orbit_frame,))
+        # dynamic tail of satellite tail
+        if satellite_tail <= 10:
+            satellite_tail += 2
+    plt.show()
+
+    #plot_annotation = ax.annotate("", (0, 0))
+    # print(plot_anotation.__dir__())
+    # print(plot_orbit_object[0].__dir__())
+    # handles, labels = ax.get_legend_handles_labels()
+
+    # plt.legend(list(set(handles)), list(set(labels)))
+    # plt.legend()
+
+    return frames_for_anim_list, fig
+
+def calc_skalar_product(input_grace_position, input_gps_position):
+
+    dot = numpy.dot(input_grace_position, input_gps_position)
+    grace_mod = numpy.sqrt((input_grace_position * input_grace_position).sum())
+    gps_mod = numpy.sqrt((input_gps_position * input_gps_position).sum())
+    cos_angle = dot / grace_mod / gps_mod
+    angle = numpy.arccos(cos_angle) * (180 / numpy.pi)
+
+    return angle
+
+
+# fargs=(sat_orbits_dict, sat_names, index_start, ax)
+def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_index_start, input_ax):
+
+
+    print("- rendering frame ", i)
     for sat_name in input_sat_names:
 
         if "graceA" == sat_name:
-            print("GRACE A MATCH")
+            #print("- GRACE A MATCH")
             sat_label = "GRACE A"
             sat_color = "red"
+            satellite_tail = 8
 
         else:
+            satellite_tail = 5
             sat_label = "GPS"
-            sat_color = "green"
+            sat_color = "yellow"
 
-        print("- proccessing satorbit for %s" % sat_name)
+            grace_position = input_sat_orbits_dict["graceA"][input_index_start + i]
+            gps_sat_position = input_sat_orbits_dict[sat_name][input_index_start + i]
 
-        sat_data_phi = [satellite.phi() for satellite in input_sat_orbit_dict[sat_name][input_index_start + i - satellite_tail : input_index_start + i]]
-        sat_data_lam = [satellite.lam() for satellite in input_sat_orbit_dict[sat_name][input_index_start + i - satellite_tail : input_index_start + i]]
+            angle = calc_skalar_product(grace_position.get_koords(), gps_sat_position.get_koords())
 
-        input_anotation.set_text(sat_name)
-        input_anotation.xy = (sat_data_lam[-1], sat_data_phi[-1])
-        input_orbit_plot_object.set_data(sat_data_lam, sat_data_phi)
-        input_orbit_plot_object.set_color(sat_color)
+            if angle >= 90:
+                lam_line_of_sight = [grace_position.lam(), gps_sat_position.lam()]
+                phi_line_of_sight = [grace_position.phi(), gps_sat_position.phi()]
 
-        if satellite_tail <= 5:
-            satellite_tail += 1
+                input_ax.plot(lam_line_of_sight, phi_line_of_sight, color="cyan", label="visibility")
 
-    return input_sat_orbit_dict, input_index_start, input_orbit_plot_object, input_anotation
+                #print("Winkel Zwischen Sat: ", angle)
+        sat_data_phi = [satellite.phi() for satellite in input_sat_orbits_dict[sat_name][input_index_start + i - satellite_tail: input_index_start + i]]
+        sat_data_lam = [satellite.lam() for satellite in input_sat_orbits_dict[sat_name][input_index_start + i - satellite_tail: input_index_start + i]]
+
+
+        #print("- proccessing satorbit for %s" % sat_name, " lam: ", sat_data_lam)
+
+        input_ax.plot(sat_data_lam, sat_data_phi, color=sat_color, label=sat_label, transform=ccrs.Geodetic())
+        input_ax.plot(sat_data_lam[-1], sat_data_phi[-1], 'o', color=sat_color, markersize=2, label=sat_label, transform=ccrs.Geodetic())
+        input_ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]), color=sat_color )
+
+    return input_ax
 
 def calc_utc_date(input_julian):
     start_date = datetime.datetime(1858, 11, 17)
