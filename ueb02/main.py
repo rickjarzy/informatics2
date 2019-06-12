@@ -45,8 +45,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    print("Args: ", args)
-    print("args time: ", args.time)
+    print("# Args: ", args)
+    print("# args time: ", args.time)
     try:
         if args.date:
 
@@ -63,8 +63,8 @@ if __name__ == "__main__":
             sat_names = [sat_name for sat_name in sat_orbits_dict]
 
             # used to determin the index at the specific epoch
-            sat_epochs_start_date = [sat_epoch for sat_epoch in sat_orbits_indizes][0]
-
+            sat_epochs_date_list = [sat_epoch for sat_epoch in sat_orbits_indizes]
+            sat_epochs_start_date = sat_epochs_date_list[0]
 
             # check if time intervall has been handed
             if args.time:
@@ -75,31 +75,31 @@ if __name__ == "__main__":
                 index_start, index_end = create_start_end_epoch_index(12, 13, sat_epochs_start_date, sat_orbits_indizes)
 
             if args.novisibilty:
-                print("- Visibility lines have been turned on")
+                print("# Visibility lines have been turned on")
 
-            print("Start index: ", index_start, " - end index: ", index_end)
-            print("processing %s satellites ... " % str(len(sat_names)))
+            print("# Start index: ", index_start, " - end index: ", index_end)
+            print("# processing %s satellites ... " % str(len(sat_names)))
 
-            print("\n- start plotting and writing out animation\n"
+            print("\n\n# start plotting and writing out animation\n"
                   "  ----------------------------------------")
 
             blue_marble_img = plt.imread(blue_marble_month_filename)
 
             number_of_iteration = abs(index_start - index_end)
-            print("number of iterations: ", number_of_iteration)
+            print("# number of iterations: ", number_of_iteration)
 
             # FUNC ANIMATION
             # ==============
 
             #fig = plt.figure()
             #ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+
             ax.imshow(blue_marble_img, transform=ccrs.Robinson())
-            #ax.set_extent((180,-180,90,-90))
 
             # are only used for the legend
-            ax_grace, = ax.plot([0, 0], [0, 0], color="red", label="GRACE A", transform=ccrs.Geodetic())
-            ax_gps, = ax.plot([0, 0], [0, 0], color="yellow", label="GPS", transform=ccrs.Geodetic())
-            ax_vis, = ax.plot([0, 0], [0, 0], color="cyan", label="VISIBILITY")
+            ax_grace, = ax.plot([], [], "o", color="red", label="GRACE A", )
+            ax_gps, = ax.plot([], [], "o", color="yellow", label="GPS", )
+            ax_vis, = ax.plot([], [], color="cyan", label="VISIBILITY")
 
             plt.legend()
             anim = animation.FuncAnimation(fig, animate_orbit_movement, number_of_iteration, fargs=(sat_orbits_dict, sat_names, index_start, args.novisibilty, ax_grace, ax_gps, ax_vis), interval=250)
@@ -123,6 +123,6 @@ if __name__ == "__main__":
         else:
             print("# ERROR - no date has been handed")
     except KeyboardInterrupt:
-        print("Programm stopped by user via STRG+C")
+        print("# Programm stopped by user via STRG+C")
 
-    print("Programm ENDE")
+    print("# Programm ENDE")

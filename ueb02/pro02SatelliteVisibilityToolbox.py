@@ -12,7 +12,12 @@ import cartopy.crs as ccrs
 from matplotlib import pyplot as plt
 
 class Satellite():
+    """
+    Satellite object that stores the entire satorbit coordinates in ECEF for one day for a GPS Satellite or the Grace A
+    Satellite
+    """
 
+    # Constructor
     def __init__(self,name,  xyz_array, ax_dot, ax_tail, ax_vis=None):
         if isinstance(name, str):
             self.name = name
@@ -27,12 +32,24 @@ class Satellite():
 
     # getter methods
     def get_koords(self, index_start, index_end=None):
+        """
+
+        :param index_start:
+        :param index_end:
+        :return:
+        """
+
         if index_end:
             return self.__xyz[index_start:index_end]
         else:
             return self.__xyz[index_start]
 
     def calc_lam_phi(self, input_epoch_xyZ):
+        """
+
+        :param input_epoch_xyZ:
+        :return:
+        """
         x = input_epoch_xyZ[0]
         y = input_epoch_xyZ[1]
         z = input_epoch_xyZ[2]
@@ -44,6 +61,13 @@ class Satellite():
         return lam, phi
 
     def get_lam_phi(self, index_start, index_end=None):
+        """
+
+        :param index_start:
+        :param index_end:
+        :return:
+        """
+
         if index_end:
             epoch_xyz = self.__xyz[index_start:index_end]
             return self.calc_lam_phi(epoch_xyz)
@@ -76,19 +100,21 @@ class Satellite():
         return "Satellite instance %s  " % (self.__name)
 
 
-
 # fargs=(sat_orbits_dict, sat_names, index_start, ax)
 def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_index_start, input_visibility, input_ax_grace, input_ax_gps, input_ax_vis):
+
     plot_objects_list = [input_ax_grace, input_ax_gps, input_ax_vis]
+
     print("- rendering frame ", i)
     print("- render input_index_start ", input_index_start)
+
     for sat_name in input_sat_names:
 
         if "graceA" == sat_name:
-            #print("- GRACE A MATCH")
+
             satellite_tail = 8
 
-            grace_instance = input_sat_orbits_dict[sat_name]
+            grace_instance = input_sat_orbits_dict["graceA"]
 
             sat_data_lam, sat_data_phi = grace_instance.get_lam_phi(input_index_start + i - satellite_tail, input_index_start + i)
 
@@ -125,6 +151,7 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_inde
                     #print("Winkel Zwischen Sat: ", angle)
 
             gps_data_lam, gps_data_phi = gps_instance.get_lam_phi(input_index_start + i - satellite_tail, input_index_start + i)
+
             gps_instance.tail.set_data(gps_data_lam, gps_data_phi)
             gps_instance.dot.set_data(gps_data_lam[-1], gps_data_phi[-1])
 
@@ -141,6 +168,11 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_inde
     return plot_objects_list
 
 def calc_utc_date(input_julian):
+    """
+
+    :param input_julian:
+    :return:
+    """
     start_date = datetime.datetime(1858, 11, 17)
     epoch_date = start_date + datetime.timedelta(days=input_julian)
 
@@ -148,33 +180,39 @@ def calc_utc_date(input_julian):
 
 
 def read_out_sat_orbit_files(input_verbosity):
+    """
+
+    :param input_verbosity:
+    :return:
+    """
     # browse working dir ( that is changed in the collect_sat_orbit_data function to the selected date dir)
-    sat_orbit_txt_list = glob.glob('*.gz')
+    sat_orbit_gt_list = glob.glob('*.gz')
 
     # dict that has the "GPS Sat name" as key and a list of epochs of type Satellite as value
     satellite_orbits_dict = {}
 
     # stores the index to all sat epochs
     satellite_orbits_time_epoch_index_dict = {}
-    print("- start reading out and storing of sat orbit data\n"
+    print("\n- start reading out and storing of sat orbit data\n"
           "  -----------------------------------------------")
 
+    # figure that is needed for the animation
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-    for sat in sat_orbit_txt_list:
+
+    for sat in sat_orbit_gt_list:
+        # index that is stored as value on the satellite_orbits_time_epoch_index_dict
         index_sat_epoch = 0
 
+        #generate satname from orbit file
         sat_name = sat.split(".")[1]
-        if input_verbosity: ("- reading out and storing data of satellite: ", sat_name)
+
+        if input_verbosity: print("- reading out and storing data of satellite: ", sat_name)
 
         # read out satdata from gz
         sat_data = numpy.loadtxt(sat, skiprows=2)
 
         # refzdatum 1858-11-17
-
-        # allocate an array where the calculated lat and long values will be stored
-        sat_lonlat_array = numpy.zeros((sat_data.shape[0], 2))
-
         for epoch in sat_data:
             # calc the UTC date for the mdj entry
             epoch_date = calc_utc_date(epoch[0])
@@ -187,10 +225,11 @@ def read_out_sat_orbit_files(input_verbosity):
         # store all satellite instances onto a dict with the satname as the key and the satellite instance as value
 
         if sat_name == "graceA":
+            print("- storing graceA ",sat_name, " file name ", sat )
             # def __init__(self,name,  xyz_array, ax_dot, ax_tail, ax_vis):
             # append every sat epoch to a list and store it on the satellit_orbits_dict with sat_name as key and the list as value
 
-            grace_ax_dot_line2d_instance, = ax.plot([], [], "o", color="red", transform=ccrs.Geodetic())
+            grace_ax_dot_line2d_instance, = ax.plot([], [], "o", color="red" , transform=ccrs.Geodetic())
             grace_ax_tail_line2d_instance, = ax.plot([], [], color="red", transform=ccrs.Geodetic())
 
             satellite_orbits_dict[sat_name] = Satellite(sat_name, sat_data[:, 1:],
@@ -200,7 +239,7 @@ def read_out_sat_orbit_files(input_verbosity):
         # GPS Satellite Epochs
         else:
 
-            gps_ax_dot_line2d_instance, = ax.plot([], [], "o", color="yellow", transform=ccrs.Geodetic())
+            gps_ax_dot_line2d_instance, = ax.plot([], [], "o", color="yellow" , transform=ccrs.Geodetic())
             gps_ax_tail_line2d_instance, = ax.plot([], [], color="yellow", transform=ccrs.Geodetic())
             gps_ax_vis_line2d_instance, = ax.plot([], [], color="cyan")
 
@@ -231,7 +270,6 @@ def download_file(ftp_connection, sat_orbit_filename, input_verbosity):
 
 def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_ftp_dir, input_overwrite, input_verbosity):
 
-
     """
     downloads the sat orbit files from a specific ftp connection to a local directory
 
@@ -243,7 +281,7 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
     :return: None
     """
 
-    print("\n- start FTP connection\n  -----------------------\n- date: %s " % (input_date))
+    print("\n\n- start FTP connection\n  -----------------------\n- date: %s " % (input_date))
 
     # access ftp server
     with ftplib.FTP("ftp.tugraz.at") as ftp_connection:
@@ -300,11 +338,19 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
 
 
 def create_start_end_epoch_index(input_args_time_start, input_args_time_end, input_sat_epoch_start_date, input_sat_orbit_indizes):
+    """
+
+    :param input_args_time_start:
+    :param input_args_time_end:
+    :param input_sat_epoch_start_date:
+    :param input_sat_orbit_indizes:
+    :return:
+    """
 
     args_time_start = float(input_args_time_start)
     args_time_end = float(input_args_time_end)
 
-    print("\n- searching for start and end index of epochs\n"
+    print("\n\n- searching for start and end index of epochs\n"
           "  ----------------------------------------------")
     if (args_time_start >= 0 and args_time_end < 24) and (args_time_end >= args_time_start and args_time_end <= 24):
         print("- handed new time ranges")
