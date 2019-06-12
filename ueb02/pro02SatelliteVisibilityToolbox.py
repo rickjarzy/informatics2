@@ -44,15 +44,45 @@ class Satellite():
         else:
             return self.__xyz[index_start]
 
-    def calc_lam_phi(self, input_epoch_xyZ):
+    def calc_lam_phi_ndim(self, input_epoch_xyz):
         """
 
         :param input_epoch_xyZ:
         :return:
         """
-        x = input_epoch_xyZ[0]
-        y = input_epoch_xyZ[1]
-        z = input_epoch_xyZ[2]
+
+        print("* handed sat array in calc_lam_phi_ndim: ", input_epoch_xyz.shape, " len: ", len(input_epoch_xyz))
+
+        x = input_epoch_xyz[:, 0]
+        y = input_epoch_xyz[:, 1]
+        z = input_epoch_xyz[:, 2]
+
+        print("* x: ", x.shape)
+        print("* y: ", y.shape)
+        print("* z: ", z.shape)
+
+        r = numpy.sqrt(x ** 2 + y ** 2 + z ** 2)
+        phi = numpy.arcsin(z / r) * (180 / numpy.pi)
+        lam = numpy.arctan2(y, x) * (180 / numpy.pi)
+
+        return lam, phi
+
+    def calc_lam_phi_arr(self, input_epoch_xyz):
+        """
+
+        :param input_epoch_xyZ:
+        :return:
+        """
+
+        print("* handed sat array in calc_lam_phi_arr: ", input_epoch_xyz.shape, " len: ", len(input_epoch_xyz))
+
+        x = input_epoch_xyz[0]
+        y = input_epoch_xyz[1]
+        z = input_epoch_xyz[2]
+
+        print("* x: ", x.shape)
+        print("* y: ", y.shape)
+        print("* z: ", z.shape)
 
         r = numpy.sqrt(x ** 2 + y ** 2 + z ** 2)
         phi = numpy.arcsin(z / r) * (180 / numpy.pi)
@@ -69,13 +99,13 @@ class Satellite():
         """
 
         if index_end:
-            epoch_xyz = self.__xyz[index_start:index_end]
-            return self.calc_lam_phi(epoch_xyz)
+            epoch_xyz = self.__xyz[index_start:index_end, :]
+            return self.calc_lam_phi_ndim(epoch_xyz)
 
         else:
-            epoch_xyz = self.__xyz[index_start]
+            epoch_xyz = self.__xyz[index_start, :]
 
-            return self.calc_lam_phi(epoch_xyz)
+            return self.calc_lam_phi_arr(epoch_xyz)
 
     def calc_vis_angle(self,index_epoch, input_grace_koords):
         """
@@ -186,7 +216,7 @@ def read_out_sat_orbit_files(input_verbosity):
     :return:
     """
     # browse working dir ( that is changed in the collect_sat_orbit_data function to the selected date dir)
-    sat_orbit_gt_list = glob.glob('*.gz')
+    sat_orbit_gz_list = glob.glob('*.gz')
 
     # dict that has the "GPS Sat name" as key and a list of epochs of type Satellite as value
     satellite_orbits_dict = {}
@@ -200,7 +230,7 @@ def read_out_sat_orbit_files(input_verbosity):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
 
-    for sat in sat_orbit_gt_list:
+    for sat in sat_orbit_gz_list:
         # index that is stored as value on the satellite_orbits_time_epoch_index_dict
         index_sat_epoch = 0
 
@@ -229,7 +259,7 @@ def read_out_sat_orbit_files(input_verbosity):
             # def __init__(self,name,  xyz_array, ax_dot, ax_tail, ax_vis):
             # append every sat epoch to a list and store it on the satellit_orbits_dict with sat_name as key and the list as value
 
-            grace_ax_dot_line2d_instance, = ax.plot([], [], "o", color="red" , transform=ccrs.Geodetic())
+            grace_ax_dot_line2d_instance, = ax.plot([], [], "o", color="red", transform=ccrs.Geodetic())
             grace_ax_tail_line2d_instance, = ax.plot([], [], color="red", transform=ccrs.Geodetic())
 
             satellite_orbits_dict[sat_name] = Satellite(sat_name, sat_data[:, 1:],
@@ -239,7 +269,7 @@ def read_out_sat_orbit_files(input_verbosity):
         # GPS Satellite Epochs
         else:
 
-            gps_ax_dot_line2d_instance, = ax.plot([], [], "o", color="yellow" , transform=ccrs.Geodetic())
+            gps_ax_dot_line2d_instance, = ax.plot([], [], "o", color="yellow", transform=ccrs.Geodetic())
             gps_ax_tail_line2d_instance, = ax.plot([], [], color="yellow", transform=ccrs.Geodetic())
             gps_ax_vis_line2d_instance, = ax.plot([], [], color="cyan")
 

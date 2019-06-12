@@ -91,19 +91,23 @@ if __name__ == "__main__":
             # FUNC ANIMATION
             # ==============
 
-            #fig = plt.figure()
-            #ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-
-            ax.imshow(blue_marble_img, transform=ccrs.Robinson())
+            ax.imshow(blue_marble_img, origin='upper', extent=[-180,181,-90,91], transform=ccrs.PlateCarree())  # extend hinzufügen
 
             # are only used for the legend
-            ax_grace, = ax.plot([], [], "o", color="red", label="GRACE A", )
-            ax_gps, = ax.plot([], [], "o", color="yellow", label="GPS", )
+            ax_grace, = ax.plot([], [], "o", color="red", label="GRACE A",)
+            ax_gps, = ax.plot([], [], "o", color="yellow", label="GPS",)
             ax_vis, = ax.plot([], [], color="cyan", label="VISIBILITY")
 
             plt.legend()
-            anim = animation.FuncAnimation(fig, animate_orbit_movement, number_of_iteration, fargs=(sat_orbits_dict, sat_names, index_start, args.novisibilty, ax_grace, ax_gps, ax_vis), interval=250)
 
+            anim = animation.FuncAnimation(fig,
+                                           animate_orbit_movement,
+                                           number_of_iteration,
+                                           fargs=(sat_orbits_dict, sat_names, index_start, args.novisibilty, ax_grace, ax_gps, ax_vis),
+                                           interval=250,
+                                           blit=True)
+
+            #plt.show()
             # check if outfile was handed or use default name constructed by date and time
             if args.outfile:
                 outfile_str = args.outfile
