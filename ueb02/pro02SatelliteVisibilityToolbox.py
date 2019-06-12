@@ -11,175 +11,130 @@ import numpy
 import cartopy.crs as ccrs
 from matplotlib import pyplot as plt
 
-class Satellite:
+class Satellite():
 
-    def __init__(self, time, name, x=0., y=0., z=0., verbose=False):
-
-        if float(x) and float(y) and float(z):
-            self.__x = x
-            self.__z = z
-            self.__y = y
-
-        if isinstance(time, datetime.datetime):
-            self.__time = time
-
+    def __init__(self,name,  xyz_array, ax_dot, ax_tail, ax_vis=None):
         if isinstance(name, str):
-            self.__name = name
+            self.name = name
 
-        if isinstance(verbose, bool):
-            self.__verbose = verbose
-        if self.__verbose:
-            print("+ Create new {} Epoch - {}".format(self.__name, self.__time))
+        if isinstance(xyz_array, numpy.ndarray):
+
+            self.__xyz = xyz_array
+
+        self.dot = ax_dot
+        self.tail = ax_tail
+        self.vis = ax_vis
+
+    # getter methods
+    def get_koords(self, index_start, index_end=None):
+        if index_end:
+            return self.__xyz[index_start:index_end]
+        else:
+            return self.__xyz[index_start]
+
+    def calc_lam_phi(self, input_epoch_xyZ):
+        x = input_epoch_xyZ[0]
+        y = input_epoch_xyZ[1]
+        z = input_epoch_xyZ[2]
+
+        r = numpy.sqrt(x ** 2 + y ** 2 + z ** 2)
+        phi = numpy.arcsin(z / r) * (180 / numpy.pi)
+        lam = numpy.arctan2(y, x) * (180 / numpy.pi)
+
+        return lam, phi
+
+    def get_lam_phi(self, index_start, index_end=None):
+        if index_end:
+            epoch_xyz = self.__xyz[index_start:index_end]
+            return self.calc_lam_phi(epoch_xyz)
+
+        else:
+            epoch_xyz = self.__xyz[index_start]
+
+            return self.calc_lam_phi(epoch_xyz)
+
+    def calc_vis_angle(self,index_epoch, input_grace_koords):
+        """
+        calculate the visibility angle between a gps satellite and the grace a satellite
+        :param index_epoch:         int - used to select the epoch data from the instances xyz data block
+        :param input_grace_koords: numpy array
+        :return:
+        """
+
+        gps_pos = self.__xyz[index_epoch]
+
+        dot = numpy.dot(input_grace_koords, gps_pos)
+        grace_mod = numpy.sqrt((input_grace_koords * input_grace_koords).sum())
+        gps_mod = numpy.sqrt((gps_pos * gps_pos).sum())
+        cos_angle = dot / grace_mod / gps_mod
+        angle = numpy.arccos(cos_angle) * (180 / numpy.pi)
+
+        return angle
+
 
     def __str__(self):
-        return "GPS %s - Epoch %s " % (self.__name, self.__time)
+        return "Satellite instance %s  " % (self.__name)
 
-    def __del__(self):
-        print("- Delete Instance GPS %s - Epoch %s " % (self.__name, self.__time)) if self.__verbose else False
-
-    # make protected attributes callable
-    @property
-    def time(self):
-        return self.__time
-
-    @property
-    def x(self):
-        return self.__x
-
-    @property
-    def y(self):
-        return self.__y
-
-    @property
-    def z(self):
-        return self.__z
-
-    @property
-    def name(self):
-        return self.__name
-
-    # member functions
-
-    def r(self):
-        return numpy.sqrt( self.__x**2 + self.__y**2 + self.__z**2)
-
-    def phi(self):
-        return numpy.arcsin(self.__z/self.r()) * (180 / numpy.pi)
-
-    def lam(self):
-        return numpy.arctan2(self.__y, self.__x) * (180 / numpy.pi)
-
-    def get_koords(self):
-        return numpy.array([self.__x, self.__y, self.__z])
-
-
-def plot_orbit_time_series(input_sat_orbits_dict, input_sat_names, input_index_start, input_index_end, input_blue_marble_month_filename):
-    satellite_tail = 1
-
-    blue_marble_img = plt.imread(input_blue_marble_month_filename)
-
-    # plot trajectory:
-    fig = plt.figure()
-
-    ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
-
-    frames_for_anim_list = []
-    for sat_data_index in range(input_index_start, input_index_end + 1, 1):
-
-        for sat_name in input_sat_names:
-
-            if "graceA" == sat_name:
-                #print("GRACE A MATCH")
-                sat_label = "GRACE A"
-                sat_color = "red"
-
-            else:
-                sat_label = "GPS"
-                sat_color = "green"
-
-            #print("- proccessing satorbit for %s" % sat_name, " - at epoch: ", sat_data_index)
-
-            #print(sat_data_index, " - ", input_sat_orbits_dict[sat_name][sat_data_index].time)
-
-            sat_data_phi = [satellite.phi() for satellite in input_sat_orbits_dict[sat_name][sat_data_index - satellite_tail:sat_data_index]]
-            sat_data_lam = [satellite.lam() for satellite in input_sat_orbits_dict[sat_name][sat_data_index - satellite_tail:sat_data_index]]
-
-            #print("sat phi: ", sat_data_phi)
-
-            ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]))
-            ax.set_xlabel("PHI")
-            ax.set_ylabel("LAM")
-            orbit_frame = ax.plot(sat_data_lam, sat_data_phi, label=sat_label, color=sat_color, transform=ccrs.Geodetic())
-
-
-            frames_for_anim_list.append((orbit_frame,))
-        # dynamic tail of satellite tail
-        if satellite_tail <= 10:
-            satellite_tail += 2
-    plt.show()
-
-    #plot_annotation = ax.annotate("", (0, 0))
-    # print(plot_anotation.__dir__())
-    # print(plot_orbit_object[0].__dir__())
-    # handles, labels = ax.get_legend_handles_labels()
-
-    # plt.legend(list(set(handles)), list(set(labels)))
-    # plt.legend()
-
-    return frames_for_anim_list, fig
-
-def calc_skalar_product(input_grace_position, input_gps_position):
-
-    dot = numpy.dot(input_grace_position, input_gps_position)
-    grace_mod = numpy.sqrt((input_grace_position * input_grace_position).sum())
-    gps_mod = numpy.sqrt((input_gps_position * input_gps_position).sum())
-    cos_angle = dot / grace_mod / gps_mod
-    angle = numpy.arccos(cos_angle) * (180 / numpy.pi)
-
-    return angle
 
 
 # fargs=(sat_orbits_dict, sat_names, index_start, ax)
-def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_index_start, input_ax):
-
-
+def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_index_start, input_ax_grace, input_ax_gps, input_ax_vis):
+    plot_objects_list = [input_ax_grace, input_ax_gps, input_ax_vis]
     print("- rendering frame ", i)
+    print("- render input_index_start ", input_index_start)
     for sat_name in input_sat_names:
 
         if "graceA" == sat_name:
             #print("- GRACE A MATCH")
-            sat_label = "GRACE A"
-            sat_color = "red"
             satellite_tail = 8
+
+            grace_instance = input_sat_orbits_dict[sat_name]
+
+            sat_data_lam, sat_data_phi = grace_instance.get_lam_phi(input_index_start + i - satellite_tail, input_index_start + i)
+
+            grace_instance.dot.set_data(sat_data_lam[-1], sat_data_phi[-1])
+            grace_instance.tail.set_data(sat_data_lam, sat_data_phi)
+
+            plot_objects_list.append(grace_instance.dot)
+            plot_objects_list.append(grace_instance.tail)
 
         else:
             satellite_tail = 5
-            sat_label = "GPS"
-            sat_color = "yellow"
 
-            grace_position = input_sat_orbits_dict["graceA"][input_index_start + i]
-            gps_sat_position = input_sat_orbits_dict[sat_name][input_index_start + i]
+            gps_instance = input_sat_orbits_dict[sat_name]
+            grace_instance = input_sat_orbits_dict["graceA"]
 
-            angle = calc_skalar_product(grace_position.get_koords(), gps_sat_position.get_koords())
+            angle = gps_instance.calc_vis_angle(input_index_start+1, grace_instance.get_koords(input_index_start + i))
+
 
             if angle >= 90:
-                lam_line_of_sight = [grace_position.lam(), gps_sat_position.lam()]
-                phi_line_of_sight = [grace_position.phi(), gps_sat_position.phi()]
+                grace_lam, grace_phi = grace_instance.get_lam_phi(input_index_start+i)
+                gps_lam, gps_phi = gps_instance.get_lam_phi(input_index_start + i)
+                lam_line_of_sight = [grace_lam, gps_lam]
+                phi_line_of_sight = [grace_phi, gps_phi]
 
-                input_ax.plot(lam_line_of_sight, phi_line_of_sight, color="cyan", label="visibility")
+                gps_instance.vis.set_data(lam_line_of_sight, phi_line_of_sight)
+
+                plot_objects_list.append(gps_instance.vis)
+
 
                 #print("Winkel Zwischen Sat: ", angle)
-        sat_data_phi = [satellite.phi() for satellite in input_sat_orbits_dict[sat_name][input_index_start + i - satellite_tail: input_index_start + i]]
-        sat_data_lam = [satellite.lam() for satellite in input_sat_orbits_dict[sat_name][input_index_start + i - satellite_tail: input_index_start + i]]
 
+            gps_data_lam, gps_data_phi = gps_instance.get_lam_phi(input_index_start + i - satellite_tail, input_index_start + i)
+            gps_instance.tail.set_data(gps_data_lam, gps_data_phi)
+            gps_instance.dot.set_data(gps_data_lam[-1], gps_data_phi[-1])
+            gps_instance.dot.annotate(gps_instance.name, (gps_data_lam[-1], gps_data_phi[-1]), color='yellow')
+            plot_objects_list.append(gps_instance.dot)
+            plot_objects_list.append(gps_instance.tail)
 
         #print("- proccessing satorbit for %s" % sat_name, " lam: ", sat_data_lam)
 
-        input_ax.plot(sat_data_lam, sat_data_phi, color=sat_color, label=sat_label, transform=ccrs.Geodetic())
-        input_ax.plot(sat_data_lam[-1], sat_data_phi[-1], 'o', color=sat_color, markersize=2, label=sat_label, transform=ccrs.Geodetic())
-        input_ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]), color=sat_color )
+        #input_ax.plot(sat_data_lam, sat_data_phi, color=sat_color, label=sat_label, transform=ccrs.Geodetic())
+        #input_ax.plot(sat_data_lam[-1], sat_data_phi[-1], 'o', color=sat_color, markersize=2, label=sat_label, transform=ccrs.Geodetic())
+        #input_ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]), color=sat_color )
 
-    return input_ax
+    #return input_ax_grace, input_ax_gps, input_ax_vis
+    return plot_objects_list
 
 def calc_utc_date(input_julian):
     start_date = datetime.datetime(1858, 11, 17)
@@ -199,6 +154,9 @@ def read_out_sat_orbit_files(input_verbosity):
     satellite_orbits_time_epoch_index_dict = {}
     print("- start reading out and storing of sat orbit data\n"
           "  -----------------------------------------------")
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
     for sat in sat_orbit_txt_list:
         index_sat_epoch = 0
 
@@ -212,6 +170,9 @@ def read_out_sat_orbit_files(input_verbosity):
 
         # refzdatum 1858-11-17
 
+        # allocate an array where the calculated lat and long values will be stored
+        sat_lonlat_array = numpy.zeros((sat_data.shape[0], 2))
+
         for epoch in sat_data:
             # calc the UTC date for the mdj entry
             epoch_date = calc_utc_date(epoch[0])
@@ -219,19 +180,40 @@ def read_out_sat_orbit_files(input_verbosity):
             # write index of every epoch onto dict - gets refilled every time - not beautiful i hope i find a better solution
             satellite_orbits_time_epoch_index_dict[epoch_date] = index_sat_epoch
 
-            # append every sat epoch to a list and store it on the satellit_orbits_dict with sat_name as key and the list as value
-            sat_epoch_list.append(Satellite(epoch_date, sat_name, epoch[1], epoch[2], epoch[3]))
 
-            # print(start_date)
-            # print(epoch_date)
-            # print(jul_date)
             index_sat_epoch += 1
 
-        # store all orbit epochs of each satellite onto a dict with the satname as the key and a list with Satellite objects as value
-        satellite_orbits_dict[sat_name] = sat_epoch_list
+        # store all satellite instances onto a dict with the satname as the key and the satellite instance as value
+
+        if sat_name == "graceA":
+            # def __init__(self,name,  xyz_array, ax_dot, ax_tail, ax_vis):
+            # append every sat epoch to a list and store it on the satellit_orbits_dict with sat_name as key and the list as value
+
+            grace_ax_dot_line2d_instance, = ax.plot([], [], "o", color="red", transform=ccrs.Geodetic())
+            grace_ax_tail_line2d_instance, = ax.plot([], [], color="red", transform=ccrs.Geodetic())
+
+            satellite_orbits_dict[sat_name] = Satellite(sat_name, sat_data[:, 1:],
+                                            grace_ax_dot_line2d_instance,
+                                            grace_ax_tail_line2d_instance,
+                                            )
+        # GPS Satellite Epochs
+        else:
+
+            gps_ax_dot_line2d_instance, = ax.plot([], [], "o", color="yellow", transform=ccrs.Geodetic())
+            gps_ax_tail_line2d_instance, = ax.plot([], [], color="yellow", transform=ccrs.Geodetic())
+            gps_ax_vis_line2d_instance, = ax.plot([], [], color="cyan")
+
+            satellite_orbits_dict[sat_name] = Satellite(sat_name, sat_data[:, 1:],
+                                            gps_ax_dot_line2d_instance,
+                                            gps_ax_tail_line2d_instance,
+                                            gps_ax_vis_line2d_instance,
+                                            )
+
+
+
     print("- finished reading out and storing of sat orbit data")
 
-    return satellite_orbits_dict, satellite_orbits_time_epoch_index_dict
+    return satellite_orbits_dict, satellite_orbits_time_epoch_index_dict, fig, ax
 
 
 def download_file(ftp_connection, sat_orbit_filename, input_verbosity):

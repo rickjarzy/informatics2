@@ -57,10 +57,13 @@ if __name__ == "__main__":
             collect_sat_orbit_data(args.date[0], blue_marble_month_filename, args.dir, args.overwrite, args.verbosity)
 
             # read out the sat orbit data from the dir that was created or selected
-            sat_orbits_dict, sat_orbits_indizes = read_out_sat_orbit_files(args.verbosity)
+            sat_orbits_dict, sat_orbits_indizes, fig, ax = read_out_sat_orbit_files(args.verbosity)
 
             # list with all satellite names that are visibible at that day
             sat_names = [sat_name for sat_name in sat_orbits_dict]
+
+            # used to determin the index at the specific epoch
+            sat_epochs_start_date = [sat_epoch for sat_epoch in sat_orbits_indizes][0]
 
 
             # check if time intervall has been handed
@@ -74,8 +77,8 @@ if __name__ == "__main__":
                     print("handed new time ranges")
 
                     # create time stamp of type datetime
-                    start_datetime_object = sat_orbits_dict[sat_names[0]][0].time +datetime.timedelta(hours=args_time_start)
-                    end_datetime_object = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
+                    start_datetime_object = sat_epochs_start_date + datetime.timedelta(hours=args_time_start)
+                    end_datetime_object = sat_epochs_start_date + datetime.timedelta(hours=args_time_end)
 
                     # "translate" fractal to seconds
                     if start_datetime_object.second > 0:
@@ -95,8 +98,8 @@ if __name__ == "__main__":
                         print("new end time: ", new_end_time)
 
                     # start time and end time of selectetd intervall - they are used to select the indizes of the epoch list
-                    datetime_start = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_start)
-                    datetime_end = sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=args_time_end)
+                    datetime_start = sat_epochs_start_date + datetime.timedelta(hours=args_time_start)
+                    datetime_end = sat_epochs_start_date + datetime.timedelta(hours=args_time_end)
 
                     print("start intervall: ", datetime_start)
                     print("end intervall: ", datetime_end)
@@ -107,8 +110,8 @@ if __name__ == "__main__":
                 else:
                     # if no time values are handed the default values are used - 12 - 13 h
                     print("No or wrong time intervall has been handed {} : {} - switching to 0 : 24 ".format(args.time[0], args.time[1]))
-                    index_start = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=12)]
-                    index_end = sat_orbits_indizes[sat_orbits_dict[sat_names[0]][0].time + datetime.timedelta(hours=13)]
+                    index_start = sat_epochs_start_date + datetime.timedelta(hours=12)
+                    index_end = sat_epochs_start_date + datetime.timedelta(hours=13)
 
                 print("Start index: ", index_start, " - end index: ", index_end)
                 print("processing %s satellites ... " % str(len(sat_names)))
@@ -123,15 +126,21 @@ if __name__ == "__main__":
                 #anim = animation.ArtistAnimation(artist_fig, frames, interval=50, repeat_delay=1000)
 
                 number_of_iteration = abs(index_start - index_end)
-                print("number of interations: ", number_of_iteration)
+                print("number of iterations: ", number_of_iteration)
 
                 # FUNC ANIMATION
                 # ==============
 
-                fig = plt.figure()
-                ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
+                #fig = plt.figure()
+                #ax = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree())
                 ax.imshow(blue_marble_img, transform=ccrs.Robinson())
-                anim = animation.FuncAnimation(fig, animate_orbit_movement, number_of_iteration, fargs=(sat_orbits_dict, sat_names, index_start, ax), interval=250)
+                # are only used for the legend
+                ax_grace, = ax.plot([0, 0], [0, 0], color="red", label="GRACE A", transform=ccrs.Geodetic())
+                ax_gps, = ax.plot([0, 0], [0, 0], color="yellow", label="GPS", transform=ccrs.Geodetic())
+                ax_vis, = ax.plot([0, 0], [0, 0], color="cyan", label="VISIBILITY")
+
+                #plt.legend()
+                anim = animation.FuncAnimation(fig, animate_orbit_movement, number_of_iteration, fargs=(sat_orbits_dict, sat_names, index_start, ax_grace, ax_gps, ax_vis), interval=250)
 
                 # check if outfile was handed or use default name constructed by date and time
                 if args.outfile:
