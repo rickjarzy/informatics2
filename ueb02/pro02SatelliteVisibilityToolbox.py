@@ -121,12 +121,11 @@ class Satellite():
         :param input_grace_koords: numpy array
         :return: angle in degrees
         """
-        print("* input grace koords: ", input_grace_koords)
+
         gps_pos = self.__xyz[index_epoch]
-        print("* gps koords: ", gps_pos)
 
         # vector graceA - Koord Center
-        vec_grace_earth = numpy.array((0,0,0)) - input_grace_koords
+        vec_grace_earth = numpy.array((0, 0, 0)) - input_grace_koords
 
         # vector graceA - GPS
         vec_grace_gps = gps_pos - input_grace_koords
@@ -138,9 +137,9 @@ class Satellite():
         gps_mod = numpy.sqrt((vec_grace_gps * vec_grace_gps).sum())
 
         cos_angle = dot / (grace_mod * gps_mod)
-        print("* cos_angle: ", cos_angle)
+
         angle = numpy.arccos(cos_angle) * (360/2 / numpy.pi)
-        print("* angle: ", angle)
+
         return angle
 
     def __str__(self):
@@ -231,7 +230,7 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_epochs_date_list,
 
                 # the gps satellites are only visible if their skalarproduct is bigger than 90°
                 if angle >= 90:
-                    print("sat_name: ", sat_name, " has angle to grace: ", angle)
+
                     grace_lam, grace_phi = grace_instance.get_lam_phi(input_index_start+i)
                     gps_lam, gps_phi = gps_instance.get_lam_phi(input_index_start + i)
 
