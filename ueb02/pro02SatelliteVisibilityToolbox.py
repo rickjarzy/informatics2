@@ -50,16 +50,9 @@ class Satellite():
         :param input_epoch_xyZ:
         :return:
         """
-
-        print("* handed sat array in calc_lam_phi_ndim: ", input_epoch_xyz.shape, " len: ", len(input_epoch_xyz))
-
         x = input_epoch_xyz[:, 0]
         y = input_epoch_xyz[:, 1]
         z = input_epoch_xyz[:, 2]
-
-        print("* x: ", x.shape)
-        print("* y: ", y.shape)
-        print("* z: ", z.shape)
 
         r = numpy.sqrt(x ** 2 + y ** 2 + z ** 2)
         phi = numpy.arcsin(z / r) * (180 / numpy.pi)
@@ -74,21 +67,15 @@ class Satellite():
         :return:
         """
 
-        print("* handed sat array in calc_lam_phi_arr: ", input_epoch_xyz.shape, " len: ", len(input_epoch_xyz))
-
         x = input_epoch_xyz[0]
         y = input_epoch_xyz[1]
         z = input_epoch_xyz[2]
-
-        print("* x: ", x.shape)
-        print("* y: ", y.shape)
-        print("* z: ", z.shape)
 
         r = numpy.sqrt(x ** 2 + y ** 2 + z ** 2)
         phi = numpy.arcsin(z / r) * (180 / numpy.pi)
         lam = numpy.arctan2(y, x) * (180 / numpy.pi)
 
-        return lam, phi
+        return numpy.array([lam]), numpy.array([phi])
 
     def get_lam_phi(self, index_start, index_end=None):
         """
@@ -97,12 +84,14 @@ class Satellite():
         :param index_end:
         :return:
         """
-
+        print("* index_start: ", index_start, " - index_end: ", index_end)
         if index_end:
+            #print("* select sat epoch for range of epochs")
             epoch_xyz = self.__xyz[index_start:index_end, :]
             return self.calc_lam_phi_ndim(epoch_xyz)
 
         else:
+            #print("* select sat_epoch for single epoch")
             epoch_xyz = self.__xyz[index_start, :]
 
             return self.calc_lam_phi_arr(epoch_xyz)
@@ -125,7 +114,6 @@ class Satellite():
 
         return angle
 
-
     def __str__(self):
         return "Satellite instance %s  " % (self.__name)
 
@@ -136,17 +124,33 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_inde
     plot_objects_list = [input_ax_grace, input_ax_gps, input_ax_vis]
 
     print("- rendering frame ", i)
-    print("- render input_index_start ", input_index_start)
+
+    if input_index_start + i in range(0, 6 + 1, 1):
+
+        index_from = input_index_start + i
+        index_to = None
+    else:
+        satellite_tail = 6
+        index_from = input_index_start + i - satellite_tail
+        index_to = input_index_start + i
 
     for sat_name in input_sat_names:
 
         if "graceA" == sat_name:
 
-            satellite_tail = 8
+            if input_index_start+i in range(0, 8 + 1, 1):
+
+                index_from = input_index_start + i
+                index_to = None
+            else:
+                satellite_tail = 3
+                index_from = input_index_start + i - satellite_tail
+                index_to = input_index_start + i
 
             grace_instance = input_sat_orbits_dict["graceA"]
 
-            sat_data_lam, sat_data_phi = grace_instance.get_lam_phi(input_index_start + i - satellite_tail, input_index_start + i)
+            #sat_data_lam, sat_data_phi = grace_instance.get_lam_phi(input_index_start + i - satellite_tail, input_index_start + i)
+            sat_data_lam, sat_data_phi = grace_instance.get_lam_phi(index_from, index_to)
 
             grace_instance.dot.set_data(sat_data_lam[-1], sat_data_phi[-1])
             grace_instance.tail.set_data(sat_data_lam, sat_data_phi)
@@ -155,7 +159,16 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_inde
             plot_objects_list.append(grace_instance.tail)
 
         else:
-            satellite_tail = 5
+            if input_index_start+i in range(0, 8+1, 1):
+
+                index_from = input_index_start + i
+                index_to = None
+            else:
+                satellite_tail = 6
+                index_from = input_index_start + i - satellite_tail
+                index_to = input_index_start + i
+
+
             gps_instance = input_sat_orbits_dict[sat_name]
 
             if input_visibility:
@@ -180,7 +193,8 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_inde
 
                     #print("Winkel Zwischen Sat: ", angle)
 
-            gps_data_lam, gps_data_phi = gps_instance.get_lam_phi(input_index_start + i - satellite_tail, input_index_start + i)
+            gps_data_lam, gps_data_phi = gps_instance.get_lam_phi(index_from, index_to)
+
 
             gps_instance.tail.set_data(gps_data_lam, gps_data_phi)
             gps_instance.dot.set_data(gps_data_lam[-1], gps_data_phi[-1])
@@ -188,11 +202,6 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_inde
             plot_objects_list.append(gps_instance.dot)
             plot_objects_list.append(gps_instance.tail)
 
-        #print("- proccessing satorbit for %s" % sat_name, " lam: ", sat_data_lam)
-
-        #input_ax.plot(sat_data_lam, sat_data_phi, color=sat_color, label=sat_label, transform=ccrs.Geodetic())
-        #input_ax.plot(sat_data_lam[-1], sat_data_phi[-1], 'o', color=sat_color, markersize=2, label=sat_label, transform=ccrs.Geodetic())
-        #input_ax.annotate(sat_name, (sat_data_lam[-1], sat_data_phi[-1]), color=sat_color )
 
     #return input_ax_grace, input_ax_gps, input_ax_vis
     return plot_objects_list
