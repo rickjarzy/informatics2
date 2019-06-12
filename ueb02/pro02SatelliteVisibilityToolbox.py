@@ -125,9 +125,10 @@ class Satellite():
         gps_pos = self.__xyz[index_epoch]
         print("* gps koords: ", gps_pos)
 
-
+        # vector graceA - Koord Center
         vec_grace_earth = numpy.array((0,0,0)) - input_grace_koords
 
+        # vector graceA - GPS
         vec_grace_gps = gps_pos - input_grace_koords
 
         dot = numpy.dot(vec_grace_gps, vec_grace_earth)
