@@ -91,23 +91,24 @@ if __name__ == "__main__":
             # FUNC ANIMATION
             # ==============
 
-            ax.imshow(blue_marble_img, origin='upper', extent=[-180,181,-90,91], transform=ccrs.PlateCarree())  # extend hinzufügen
+            ax.imshow(blue_marble_img, origin='upper', extent=[-180, 181, -90, 91], transform=ccrs.PlateCarree())  # extend hinzufügen
 
             # are only used for the legend
             ax_grace, = ax.plot([], [], "o", color="red", label="GRACE A",)
             ax_gps, = ax.plot([], [], "o", color="yellow", label="GPS",)
             ax_vis, = ax.plot([], [], color="cyan", label="VISIBILITY")
+            text = ax.text(-178, -85, "", transform=ccrs.PlateCarree(), bbox=dict(facecolor='white', pad=4))
 
-            plt.legend()
+            plt.legend(loc='lower center', bbox_to_anchor=(0.95, 0))
 
             anim = animation.FuncAnimation(fig,
                                            animate_orbit_movement,
                                            number_of_iteration,
-                                           fargs=(sat_orbits_dict, sat_names, index_start, args.novisibilty, ax_grace, ax_gps, ax_vis),
+                                           fargs=(sat_orbits_dict, sat_epochs_date_list, index_start, args.novisibilty, ax_grace, ax_gps, ax_vis, text),
                                            interval=250,
                                            blit=True)
 
-            #plt.show()
+            plt.show()
             # check if outfile was handed or use default name constructed by date and time
             if args.outfile:
                 outfile_str = args.outfile
@@ -122,6 +123,8 @@ if __name__ == "__main__":
                     outfile_str = "animation_%s.mp4" % (args.date[0])
 
             print("start rendering animation %s ..." % outfile_str)
+
+
             anim.save(outfile_str)
 
         else:

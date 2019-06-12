@@ -46,7 +46,7 @@ def animate_via_function(input_data, input_lon, input_lat):
     coast = ax.coastlines()
 
     # print a field with the date information
-    text = ax.text(-175,-25, "", transform=ccrs.PlateCarree(), bbox=dict(facecolor='white', pad=4))
+    text = ax.text(-180,-25, "", transform=ccrs.PlateCarree(), bbox=dict(facecolor='white', pad=4))
     cbar = fig.colorbar(grid, orientation='horizontal', extend='both', extendfrac=0.025, aspect=50, pad=0.025,
                         shrink=0.75)
 
