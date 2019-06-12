@@ -78,7 +78,7 @@ class Satellite():
 
 
 # fargs=(sat_orbits_dict, sat_names, index_start, ax)
-def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_index_start, input_ax_grace, input_ax_gps, input_ax_vis):
+def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_index_start, input_visibility, input_ax_grace, input_ax_gps, input_ax_vis):
     plot_objects_list = [input_ax_grace, input_ax_gps, input_ax_vis]
     print("- rendering frame ", i)
     print("- render input_index_start ", input_index_start)
@@ -100,30 +100,34 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_names, input_inde
 
         else:
             satellite_tail = 5
-
             gps_instance = input_sat_orbits_dict[sat_name]
-            grace_instance = input_sat_orbits_dict["graceA"]
 
-            angle = gps_instance.calc_vis_angle(input_index_start+1, grace_instance.get_koords(input_index_start + i))
+            if input_visibility:
 
+                grace_instance = input_sat_orbits_dict["graceA"]
 
-            if angle >= 90:
-                grace_lam, grace_phi = grace_instance.get_lam_phi(input_index_start+i)
-                gps_lam, gps_phi = gps_instance.get_lam_phi(input_index_start + i)
-                lam_line_of_sight = [grace_lam, gps_lam]
-                phi_line_of_sight = [grace_phi, gps_phi]
-
-                gps_instance.vis.set_data(lam_line_of_sight, phi_line_of_sight)
-
-                plot_objects_list.append(gps_instance.vis)
+                angle = gps_instance.calc_vis_angle(input_index_start+1, grace_instance.get_koords(input_index_start + i))
 
 
-                #print("Winkel Zwischen Sat: ", angle)
+                if angle >= 90:
+                    grace_lam, grace_phi = grace_instance.get_lam_phi(input_index_start+i)
+                    gps_lam, gps_phi = gps_instance.get_lam_phi(input_index_start + i)
+                    lam_line_of_sight = [grace_lam, gps_lam]
+                    phi_line_of_sight = [grace_phi, gps_phi]
+
+                    gps_instance.vis.set_data(lam_line_of_sight, phi_line_of_sight)
+                    plot_objects_list.append(gps_instance.vis)
+
+                else:
+                    gps_instance.vis.set_data([], [])
+                    plot_objects_list.append(gps_instance.vis)
+
+                    #print("Winkel Zwischen Sat: ", angle)
 
             gps_data_lam, gps_data_phi = gps_instance.get_lam_phi(input_index_start + i - satellite_tail, input_index_start + i)
             gps_instance.tail.set_data(gps_data_lam, gps_data_phi)
             gps_instance.dot.set_data(gps_data_lam[-1], gps_data_phi[-1])
-            gps_instance.dot.annotate(gps_instance.name, (gps_data_lam[-1], gps_data_phi[-1]), color='yellow')
+
             plot_objects_list.append(gps_instance.dot)
             plot_objects_list.append(gps_instance.tail)
 
@@ -162,8 +166,6 @@ def read_out_sat_orbit_files(input_verbosity):
 
         sat_name = sat.split(".")[1]
         if input_verbosity: ("- reading out and storing data of satellite: ", sat_name)
-        # list of satellite epochs of type Satellite
-        sat_epoch_list = []
 
         # read out satdata from gz
         sat_data = numpy.loadtxt(sat, skiprows=2)
@@ -179,7 +181,6 @@ def read_out_sat_orbit_files(input_verbosity):
 
             # write index of every epoch onto dict - gets refilled every time - not beautiful i hope i find a better solution
             satellite_orbits_time_epoch_index_dict[epoch_date] = index_sat_epoch
-
 
             index_sat_epoch += 1
 
@@ -208,7 +209,6 @@ def read_out_sat_orbit_files(input_verbosity):
                                             gps_ax_tail_line2d_instance,
                                             gps_ax_vis_line2d_instance,
                                             )
-
 
 
     print("- finished reading out and storing of sat orbit data")
@@ -297,3 +297,56 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
             download_file(ftp_connection, input_blue_marble_month_filename, input_verbosity)
 
         print("- finished download - close connection\n")
+
+
+def create_start_end_epoch_index(input_args_time_start, input_args_time_end, input_sat_epoch_start_date, input_sat_orbit_indizes):
+
+    args_time_start = float(input_args_time_start)
+    args_time_end = float(input_args_time_end)
+
+    print("\n- searching for start and end index of epochs\n"
+          "  ----------------------------------------------")
+    if (args_time_start >= 0 and args_time_end < 24) and (args_time_end >= args_time_start and args_time_end <= 24):
+        print("- handed new time ranges")
+
+        # create time stamp of type datetime
+        start_datetime_object = input_sat_epoch_start_date + datetime.timedelta(hours=args_time_start)
+        end_datetime_object = input_sat_epoch_start_date + datetime.timedelta(hours=args_time_end)
+
+        # "translate" fractal to seconds
+        if start_datetime_object.second > 0:
+            print("- Seconds start: ", start_datetime_object.second)
+        if end_datetime_object.second > 0:
+            print("- Seconds end: ", end_datetime_object.second)
+            sec = end_datetime_object.second
+
+            delta = 60 - sec
+
+            print("- Delta: ", delta)
+
+            new_end_time = end_datetime_object + datetime.timedelta(seconds=delta)
+
+            print("- new end time: ", new_end_time)
+
+        # start time and end time of selectetd intervall - they are used to select the indizes of the epoch list
+        datetime_start = input_sat_epoch_start_date + datetime.timedelta(hours=args_time_start)
+        datetime_end = input_sat_epoch_start_date + datetime.timedelta(hours=args_time_end)
+
+        print("- start intervall: ", datetime_start)
+        print("- end intervall: ", datetime_end)
+
+        index_start = input_sat_orbit_indizes[datetime_start]
+        index_end = input_sat_orbit_indizes[datetime_end]
+
+    else:
+        # if no time values are handed the default values are used - 12 - 13 h
+        print("- No or wrong time intervall has been handed {} : {} - switching to 0 : 24 ".format(args_time_start,
+                                                                                                 args_time_end))
+        # switch do prefefined time range
+        datetime_start = input_sat_epoch_start_date + datetime.timedelta(hours=12)
+        datetime_end = input_sat_epoch_start_date + datetime.timedelta(hours=13)
+
+        index_start = input_sat_orbit_indizes[datetime_start]
+        index_end = input_sat_orbit_indizes[datetime_end]
+
+    return index_start, index_end
