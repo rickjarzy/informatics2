@@ -170,8 +170,6 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_epochs_date_list,
 
     plot_objects_list.append(input_text)
 
-    print("- rendering frame ", i)
-
     # walk through all satellites in the sat_orbits_dict and plot their epoch position
     for sat_name in input_sat_orbits_dict:
 
@@ -184,7 +182,7 @@ def animate_orbit_movement(i, input_sat_orbits_dict, input_sat_epochs_date_list,
                 index_from = input_index_start + i
                 index_to = None
             else:
-                satellite_tail = 3
+                satellite_tail = 6
                 index_from = input_index_start + i - satellite_tail
                 index_to = input_index_start + i
 
@@ -321,7 +319,7 @@ def read_out_sat_orbit_files(input_verbosity):
         # store all satellite instances onto a dict with the satname as the key and the satellite instance as value
 
         if sat_name == "graceA":
-            print("- storing graceA ",sat_name, " file name ", sat )
+            if input_verbosity: print("- storing ",sat_name, " file name ", sat )
             # def __init__(self,name,  xyz_array, ax_dot, ax_tail, ax_vis):
             # append every sat epoch to a list and store it on the satellit_orbits_dict with sat_name as key and the list as value
 
@@ -336,7 +334,7 @@ def read_out_sat_orbit_files(input_verbosity):
                                             )
         # GPS Satellite Epochs
         else:
-
+            if input_verbosity: print("- storing ", sat_name, " file name ", sat)
             gps_ax_dot_line2d_instance, = ax.plot([], [], "o", color="yellow", transform=ccrs.Geodetic())
             gps_ax_tail_line2d_instance, = ax.plot([], [], color="yellow", transform=ccrs.Geodetic())
             gps_ax_vis_line2d_instance, = ax.plot([], [], color="cyan")
@@ -378,7 +376,7 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
     :param input_ftp_dir:                       string - path to the download folder with the epochs dirs
     :param input_overwrite:                     bool - if flag is set and the epoch download folder exists on disk, its content will be overwritten
     :param input_verbosity:                     bool - if set additional process informations will be printed
-    :return: No return values
+    :return:                                    bool - if download was successfully True will be returned - else False
     """
 
     print("\n\n- start FTP connection\n  -----------------------\n- date: %s " % (input_date))
@@ -388,56 +386,69 @@ def collect_sat_orbit_data(input_date, input_blue_marble_month_filename, input_f
 
         # login and change dir on ftp to the date specific dir for the sat orbits
         ftp_connection.login()
+        # catch if the entered directory does not exist
         try:
-            ftp_connection.cwd(input_ftp_dir + input_date)
-        except:
-            raise InvalidDirectoryError("ERROR - Directory : {} - was not found on ftp.tugraz.at".format(input_ftp_dir + input_date))
+            try:
+                ftp_connection.cwd(input_ftp_dir + input_date)
+            except:
+                raise InvalidDirectoryError(
+                    "- ERROR - Directory : {} - was not found on ftp.tugraz.at".format(input_ftp_dir + input_date))
 
-        ftp_files_list = ftp_connection.nlst()
-        if input_verbosity:
-            print("- content of folder %s\n" % input_ftp_dir)
-            print("- ", ftp_files_list)
-            print("\n- found %d sat orbit files in dir %s" % (len(ftp_files_list), input_date))
+            ftp_files_list = ftp_connection.nlst()
+            if input_verbosity:
+                print("- content of folder %s\n" % input_ftp_dir)
+                print("- ", ftp_files_list)
+                print("\n- found %d sat orbit files in dir %s" % (len(ftp_files_list), input_date))
 
-        # check if date_dir exists
-        if os.path.exists(input_date):
-            print("- directory for %s exists" % input_date)
-        else:
-            print("- create new sat data epoch dir %s " % input_date)
-            os.mkdir(input_date)
-
-        # change working dir to selected date directory
-        os.chdir(input_date)
-
-        print("\n- start downloading %d files from ftp ..." % len(ftp_files_list))
-        for sat_orbit_filename in ftp_files_list:
-
-            # if overwrite flag is set overwrite all files in dir with new downloads
-            if input_overwrite:
-                download_file(ftp_connection, sat_orbit_filename, input_verbosity)
-
+            # check if date_dir exists
+            if os.path.exists(input_date):
+                print("- directory for %s exists" % input_date)
             else:
-                #check if file in ftp dir exists in local datespecific directory
-                if os.path.exists(sat_orbit_filename):
-                    if input_verbosity: print("- found %s in %s dir - skip download" % (sat_orbit_filename, input_date))
+                print("- create new sat data epoch dir %s " % input_date)
+                os.mkdir(input_date)
 
-                # if the file was not found in the datespecific directory download it from the ftp dir
-                else:
+            # change working dir to selected date directory
+            os.chdir(input_date)
+
+            print("\n- start downloading %d files from ftp ..." % len(ftp_files_list))
+            for sat_orbit_filename in ftp_files_list:
+
+                # if overwrite flag is set overwrite all files in dir with new downloads
+                if input_overwrite:
                     download_file(ftp_connection, sat_orbit_filename, input_verbosity)
 
-        # change to blue marble dir
-        ftp_connection.cwd("/outgoing/ITSG/teaching/2019SS_Informatik2/bluemarble/")
+                else:
+                    # check if file in ftp dir exists in local datespecific directory
+                    if os.path.exists(sat_orbit_filename):
+                        if input_verbosity: print(
+                            "- found %s in %s dir - skip download" % (sat_orbit_filename, input_date))
 
-        # download blue marble picture
-        if os.path.exists(input_blue_marble_month_filename):
-            print("\n- blue marble file %s allready exists - skip download" % input_blue_marble_month_filename)
-            pass
+                    # if the file was not found in the datespecific directory download it from the ftp dir
+                    else:
+                        download_file(ftp_connection, sat_orbit_filename, input_verbosity)
 
-        else:
-            print("\n- start downloading %s from ftp" % input_blue_marble_month_filename)
-            download_file(ftp_connection, input_blue_marble_month_filename, input_verbosity)
+            # change to blue marble dir
+            ftp_connection.cwd("/outgoing/ITSG/teaching/2019SS_Informatik2/bluemarble/")
 
-        print("- finished download - close connection\n")
+            # download blue marble picture
+            if os.path.exists(input_blue_marble_month_filename):
+                print("\n- blue marble file %s allready exists - skip download" % input_blue_marble_month_filename)
+                pass
+
+            else:
+                print("\n- start downloading %s from ftp" % input_blue_marble_month_filename)
+                download_file(ftp_connection, input_blue_marble_month_filename, input_verbosity)
+
+            print("- finished download - close connection\n")
+        # raise error msg if entered dir on ftp does not exist
+        except InvalidDirectoryError as ftp_dir_error:
+            print(ftp_dir_error.errorstring)
+
+            return False
+    # returns True value - download was successfull
+    return True
+
+
 
 
 def create_start_end_epoch_index(input_args_time_start, input_args_time_end, input_sat_epoch_start_date, input_sat_orbit_indizes):
@@ -489,7 +500,7 @@ def create_start_end_epoch_index(input_args_time_start, input_args_time_end, inp
 
         else:
             # if no time values are handed the default values are used - 12 - 13 h
-            print("- No or wrong time intervall has been handed {} : {} - switching to 0 : 24 ".format(args_time_start,
+            print("- No or wrong time intervall has been handed {} : {} - switching default range from  12:00 to 13:00 ".format(args_time_start,
                                                                                                      args_time_end))
             # switch do prefefined time range
             datetime_start = input_sat_epoch_start_date + datetime.timedelta(hours=12)
@@ -499,6 +510,48 @@ def create_start_end_epoch_index(input_args_time_start, input_args_time_end, inp
             index_end = input_sat_orbit_indizes[datetime_end]
 
         return index_start, index_end
+
+    # mainly for wrong time interval input - e.g "-t xx xx"
     except ValueError:
-        print("""\n- ERROR!!! - please insert float or int after "-t" - no strings are allowed\n"""
+        print("""\n- Value ERROR!!! - please insert float or int after "-t" - no strings are allowed\n"""
               """  userinput %s - %s\n""" %(input_args_time_start, input_args_time_end))
+    # mainly for wrong time interval input - e.g "-t xx xx"
+    except TypeError:
+        print("""\n- Type ERROR!!! - please insert float or int after "-t" - no strings are allowed\n"""
+              """  userinput %s - %s\n""" %(input_args_time_start, input_args_time_end))
+
+
+def start_screen(input_args):
+    """
+    Welcome Message and outputfile creation for animation
+    :param input_args:  Namespace - Handed user inputs
+    :return: str        outputfile name for animation
+    """
+    print("\n  Start Satellite Visibility Animation\n  Paul Arzberger Gruppe A\n  =====================================\n")
+    print("- Date: ", input_args.date)
+    print("- Time: ", input_args.time)
+    print("- FTP dir: ", input_args.dir)
+    print("- Visibility: ", input_args.novisibilty)
+    print("- Verbosity: ", input_args.verbosity)
+    print("- Overwrite: ", input_args.overwrite)
+
+
+    # check if outfile was handed or use default name constructed by date and time
+    if input_args.outfile:
+        outfile_str = input_args.outfile
+        if "mp4" == outfile_str.split(".")[-1]:
+            pass
+        else:
+            outfile_str += ".mp4"
+
+        print("- Outfile Name: ", outfile_str)
+    else:
+
+        if input_args.time:
+            outfile_str = "animation_%s_%s-%s.mp4" % (
+            input_args.date[0], input_args.time[0].replace(".", "-"), input_args.time[1].replace(".", "-"))
+        else:
+            outfile_str = "animation_%s.mp4" % (input_args.date[0])
+        print("- No Outfile Name handed - use automated one: ", outfile_str)
+
+    return outfile_str
